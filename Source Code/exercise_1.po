@@ -1,0 +1,6 @@
+while (size stdin[1] > 1)
+{
+    stdout (next stdin[1])
+    stdout (next stdin[1])
+    stdout (next stdin[2])
+}

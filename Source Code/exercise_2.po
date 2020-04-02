@@ -1,0 +1,12 @@
+while (has_next stdin[3])
+{
+    int c = next stdin[3]
+    int b = next stdin[2]
+    int a = next stdin[1]
+
+    stdout c
+    stdout b
+    stdout a
+    stdout (a + b)
+    stdout (b + c)
+}

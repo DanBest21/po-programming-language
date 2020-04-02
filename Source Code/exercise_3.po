@@ -1,0 +1,8 @@
+stdout 0
+
+while (has_next stdin[2])
+{
+    next stdin[2]
+    stdout (next stdin[2])
+    stdout (next stdin[1])
+}
