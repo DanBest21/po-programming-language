@@ -83,6 +83,7 @@ data Token =
     TokenRSquare AlexPosn       |
     TokenLCurly AlexPosn        |
     TokenRCurly AlexPosn        |
+    TokenComma AlexPosn         |
     TokenExponent AlexPosn      |
     TokenModulo AlexPosn        |
     TokenLT AlexPosn            |
