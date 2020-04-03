@@ -7,7 +7,7 @@ module Lexer where
 %wrapper "posn"
 
 -- Macro Definitions
-$digit = 0-9
+$digit = [0-9]
 $alpha = [a-zA-Z]
 
 -- Lexemes
@@ -18,7 +18,7 @@ $white+                         ;
 \;                              ;
 int                             { \p s -> TokenIntType p }
 stream                          { \p s -> TokenStreamType p }
-bool                            { \p s -> TokenBoolType p 
+bool                            { \p s -> TokenBoolType p }
 while                           { \p s -> TokenWhile p }
 if                              { \p s -> TokenIf p }
 elif                            { \p s -> TokenElif p }
@@ -29,7 +29,6 @@ size                            { \p s -> TokenSize p }
 peek                            { \p s -> TokenPeek p }
 $digit+                         { \p s -> TokenInt p (read s) }
 (true)|(false)                  { \p s -> TokenBool p (read s) }
-\{[$digit+,]*[$digit+]?}        { \p s -> TokenStream p s }
 $alpha [$alpha $digit \_]*      { \p s -> TokenVar p s }
 \=                              { \p s -> TokenAssign p }
 \+                              { \p s -> TokenPlus p }
@@ -42,17 +41,18 @@ $alpha [$alpha $digit \_]*      { \p s -> TokenVar p s }
 \]                              { \p s -> TokenRSquare p }
 \{                              { \p s -> TokenLCurly p }
 \}                              { \p s -> TokenRCurly p }
+\,                              { \p s -> TokenComma p }
 \^                              { \p s -> TokenExponent p }
 \%                              { \p s -> TokenModulo p }
 \<                              { \p s -> TokenLT p }
 \>                              { \p s -> TokenGT p }
-\<=                             { \p s -> TokenLE p }
-\>=                             { \p s -> TokenGE p }
-\==                             { \p s -> TokenEQ p }
-\!=                             { \p s -> TokenNQ p }
+\<\=                            { \p s -> TokenLE p }
+\>\=                            { \p s -> TokenGE p }
+\=\=                            { \p s -> TokenEQ p }
+\!\=                            { \p s -> TokenNQ p }
 \:                              { \p s -> TokenCons p }
-\++                             { \p s -> TokenConcat p }
-\<-                             { \p s -> TokenTake p }
+\+\+                            { \p s -> TokenConcat p }
+\<\-                            { \p s -> TokenTake p }
 
 -- Post-amble
 {
