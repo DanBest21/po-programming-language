@@ -2,5 +2,5 @@ import Lexer
 
 main :: IO ()
 main = do
-    file <- readFile "pr1.spl"
+    file <- readFile "../Source Code/pr1.spl"
     print (alexScanTokens file)
