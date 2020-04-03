@@ -1,8 +1,8 @@
-stdout 0
+print 0
 
-while (has_next stdin[2])
+while (has_next input{2})
 {
-    next stdin[2]
-    stdout (next stdin[2])
-    stdout (next stdin[1])
+    next input{2}
+    print (next input{2})
+    print (next input{1})
 }

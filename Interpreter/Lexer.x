@@ -26,10 +26,16 @@ else                            { \p s -> TokenElse p }
 has_next                        { \p s -> TokenHasNext p }
 next                            { \p s -> TokenNext p }
 size                            { \p s -> TokenSize p }
-peek                            { \p s -> TokenPeek p }
 $digit+                         { \p s -> TokenInt p (read s) }
 (true)|(false)                  { \p s -> TokenBool p (read s) }
 $alpha [$alpha $digit \_]*      { \p s -> TokenVar p s }
+\<\=                            { \p s -> TokenLE p }
+\>\=                            { \p s -> TokenGE p }
+\=\=                            { \p s -> TokenEQ p }
+\!\=                            { \p s -> TokenNE p }
+\:                              { \p s -> TokenCons p }
+\+\+                            { \p s -> TokenConcat p }
+\<\-                            { \p s -> TokenTake p }
 \=                              { \p s -> TokenAssign p }
 \+                              { \p s -> TokenPlus p }
 \-                              { \p s -> TokenMinus p }
@@ -42,17 +48,11 @@ $alpha [$alpha $digit \_]*      { \p s -> TokenVar p s }
 \{                              { \p s -> TokenLCurly p }
 \}                              { \p s -> TokenRCurly p }
 \,                              { \p s -> TokenComma p }
+\!                              { \p s -> TokenNot p }
 \^                              { \p s -> TokenExponent p }
 \%                              { \p s -> TokenModulo p }
 \<                              { \p s -> TokenLT p }
 \>                              { \p s -> TokenGT p }
-\<\=                            { \p s -> TokenLE p }
-\>\=                            { \p s -> TokenGE p }
-\=\=                            { \p s -> TokenEQ p }
-\!\=                            { \p s -> TokenNQ p }
-\:                              { \p s -> TokenCons p }
-\+\+                            { \p s -> TokenConcat p }
-\<\-                            { \p s -> TokenTake p }
 
 -- Post-amble
 {
@@ -67,7 +67,6 @@ data Token =
     TokenHasNext AlexPosn       |
     TokenNext AlexPosn          |
     TokenSize AlexPosn          |
-    TokenPeek AlexPosn          |
     TokenInt AlexPosn Int       |
     TokenBool AlexPosn Bool     |
     TokenStream AlexPosn String |
@@ -84,6 +83,7 @@ data Token =
     TokenLCurly AlexPosn        |
     TokenRCurly AlexPosn        |
     TokenComma AlexPosn         |
+    TokenNot AlexPosn           |
     TokenExponent AlexPosn      |
     TokenModulo AlexPosn        |
     TokenLT AlexPosn            |
