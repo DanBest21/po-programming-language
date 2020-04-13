@@ -1,6 +1,6 @@
 -- Pre-amble
 { 
-module Lexer where 
+module Lexer where
 }
 
 -- Wrapper
@@ -91,7 +91,7 @@ data Token =
     TokenLE AlexPosn            |
     TokenGE AlexPosn            |
     TokenEQ AlexPosn            |
-    TokenNQ AlexPosn            |
+    TokenNE AlexPosn            |
     TokenCons AlexPosn          |
     TokenConcat AlexPosn        |
     TokenTake AlexPosn
