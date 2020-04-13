@@ -54,6 +54,7 @@ import Lexer
     '>'         { TokenGT _ }
 
 -- Grammar
+%right '='
 %nonassoc if 
 %nonassoc elif 
 %nonassoc else
@@ -66,6 +67,63 @@ import Lexer
 %right '<-' ':'
 %right '^'
 %left has_next next size
+%left STREAMGET INPUTGET
 %%
+Exp : while Exp '{' Exp '}'     { While $2 $4 }
+    | if Exp '{' Exp '}'        { If $2 $4 }
+    | elif Exp '{' Exp '}'      { Elif $2 $4 }
+    | else '{' Exp '}'          { Else $3 }
+    | has_next Exp              { HasNext $2 }
+    | next Exp                  { Next $2 }
+    | size Exp                  { Size $2 }
+    | int                       { Int $1 }
+    | bool                      { Boolean $1 }
+    | '[' Stream ']'            { Stream $2 }
+
+Stream : {- empty -}            { [] }
+       | Exp                    { [$1] }
+       | Exp ',' Exp            { $3 : $1 }
 
 -- Post-amble
+{
+parseError :: [Token] -> a
+parseError ts = error errorMessage
+    where lineCol = words (tokenPosn (last ts))
+          errorMessage = "Parse error at line " ++ (lineCol !! 0) ++ ", column " ++ (lineCol !! 1)
+
+type Stream = [Int]
+
+data Type = Int' 
+          | Boolean' 
+          | Stream' 
+
+data Exp = While Exp Exp
+         | If Exp Exp
+         | Elif Exp Exp
+         | Else Exp
+         | HasNext Exp
+         | Next Exp
+         | Size Exp
+         | Int Int
+         | Boolean Bool
+         | Stream Stream
+         | Var Type String
+         | LE Exp Exp
+         | GE Exp Exp
+         | EQ Exp Exp
+         | NE Exp Exp
+         | Cons Exp Exp
+         | Concat Exp Exp
+         | Take Exp Exp
+         | Assign Var Exp
+         | Plus Exp Exp
+         | Minus Exp Exp
+         | Times Exp Exp
+         | Div Exp Exp
+         | StreamGet Exp
+         | InputGet Exp
+         | Exponent Exp Exp
+         | Modulo Exp Exp
+         | LT Exp Exp
+         | GT Exp Exp
+}
