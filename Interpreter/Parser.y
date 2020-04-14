@@ -72,16 +72,14 @@ import Lexer
 %left STREAMGET input
 %%
 Expr : {- empty -}                      { [] }
-     | Expr1                            { [$1] }
-     | Expr Expr1                       { $2 : $1 }
-     
-Expr1 : while Exp '{' Expr '}'          { While $2 $4 }
-      | If                              { $1 }
-      | Elif                            { $1 }
-      | Else                            { $1 }
-      | Exp                             { $1 }
+     | Exp                              { [$1] }
+     | Expr Exp                         { $2 : $1 }
 
-Exp : has_next Exp                      { HasNext $2 }
+Exp : while Exp '{' Expr '}'            { While $2 $4 }
+    | If                                { $1 }
+    | Elif                              { $1 }
+    | Else                              { $1 }
+    | has_next Exp                      { HasNext $2 }
     | next Exp                          { Next $2 }
     | size Exp                          { Size $2 }
     | int                               { Int $1 }
@@ -96,6 +94,7 @@ Exp : has_next Exp                      { HasNext $2 }
     | Exp '<-' Exp                      { Take $1 $3 }
     | Type Assign                       { Var $1 $2 }
     | Assign                            { $1 }
+    | var                               { VarRef $1 }
     | Exp '+' Exp                       { Plus $1 $3 }
     | Exp '-' Exp                       { Minus $1 $3 }
     | Exp '*' Exp                       { Times $1 $3 }
@@ -152,6 +151,7 @@ data Exp = While Exp [Exp]
          | Boolean Bool
          | Stream [Exp]
          | Var Type Exp
+         | VarRef String
          | LE Exp Exp
          | GE Exp Exp
          | EQ' Exp Exp
