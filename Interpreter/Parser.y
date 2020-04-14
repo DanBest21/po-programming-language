@@ -79,7 +79,7 @@ Exp : while Exp '{' Exp '}'     { While $2 $4 }
     | size Exp                  { Size $2 }
     | int                       { Int $1 }
     | bool                      { Boolean $1 }
-    | '[' StreamLiteral ']'     { Stream $2 }
+    | '[' StreamLiteral ']'     { $2 }
     | Exp '<=' Exp              { LE $1 $3 }
     | Exp '>=' Exp              { GE $1 $3 }
     | Exp '==' Exp              { EQ' $1 $3 }
@@ -110,9 +110,9 @@ Elif : If elif Exp '{' Exp '}'  { Elif $3 $5 }
 Else : If else '{' Exp '}'      { Else $4 }
      | Elif else '{' Exp '}'    { Else $4 }
 
-StreamLiteral : {- empty -}     { [] }
-              | Exp             { [$1] }
-              | Exp ',' Exp     { $3 : $1 }
+StreamLiteral : {- empty -}     { Stream [] }
+              | Exp             { Stream [$1] }
+              | Exp ',' Exp     { Stream $3 : $1 }
 
 Type : int_type                 { Int' }
      | bool_type                { Boolean' }

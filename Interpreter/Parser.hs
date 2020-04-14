@@ -1433,7 +1433,7 @@ happyReduction_10 _
 	(HappyAbsSyn8  happy_var_2)
 	_
 	 =  HappyAbsSyn4
-		 (Stream happy_var_2
+		 (happy_var_2
 	)
 happyReduction_10 _ _ _  = notHappyAtAll 
 
@@ -1679,13 +1679,13 @@ happyReduction_36 (_ `HappyStk`
 
 happyReduce_37 = happySpecReduce_0  8 happyReduction_37
 happyReduction_37  =  HappyAbsSyn8
-		 ([]
+		 (Stream []
 	)
 
 happyReduce_38 = happySpecReduce_1  8 happyReduction_38
 happyReduction_38 (HappyAbsSyn4  happy_var_1)
 	 =  HappyAbsSyn8
-		 ([happy_var_1]
+		 (Stream [happy_var_1]
 	)
 happyReduction_38 _  = notHappyAtAll 
 
@@ -1694,7 +1694,7 @@ happyReduction_39 (HappyAbsSyn4  happy_var_3)
 	_
 	(HappyAbsSyn4  happy_var_1)
 	 =  HappyAbsSyn8
-		 (happy_var_3 : happy_var_1
+		 (Stream happy_var_3 : happy_var_1
 	)
 happyReduction_39 _ _ _  = notHappyAtAll 
 
