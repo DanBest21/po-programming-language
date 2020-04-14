@@ -70,19 +70,53 @@ import Lexer
 %left STREAMGET INPUTGET
 %%
 Exp : while Exp '{' Exp '}'     { While $2 $4 }
-    | if Exp '{' Exp '}'        { If $2 $4 }
-    | elif Exp '{' Exp '}'      { Elif $2 $4 }
-    | else '{' Exp '}'          { Else $3 }
+    | If                        { $1 }
+    | Elif                      { $1 }
+    | Else                      { $1 }
     | has_next Exp              { HasNext $2 }
     | next Exp                  { Next $2 }
     | size Exp                  { Size $2 }
     | int                       { Int $1 }
     | bool                      { Boolean $1 }
-    | '[' Stream ']'            { Stream $2 }
+    | '[' StreamLiteral ']'     { Stream $2 }
+    | Exp '<=' Exp              { LE $1 $3 }
+    | Exp '>=' Exp              { GE $1 $3 }
+    | Exp '==' Exp              { EQ $1 $3 }
+    | Exp '!=' Exp              { NE $1 $3 }
+    | Exp ':' Exp               { Cons $1 $3 }
+    | Exp '++' Exp              { Concat $1 $3 }
+    | Exp '<-' Exp              { Take $1 $3 }
+    | Type Assign               { Var $1 $2 }
+    | Assign                    { $1 }
+    | Exp '+' Exp               { Plus $1 $3 }
+    | Exp '-' Exp               { Minus $1 $3 }
+    | Exp '*' Exp               { Times $1 $3 }
+    | Exp '/' Exp               { Div $1 $3 }
+    | var '[' Exp ']'           { StreamGet $1 $3 }
+    | 'input' '{' Exp '}'       { InputGet $3 }
+    | Exp '^' Exp               { Exponent $1 $3 }
+    | Exp '%' Exp               { Modulo $1 $3 }
+    | Exp '<' Exp               { LT $1 $3 }
+    | Exp '>' Exp               { GT $1 $3 }
+    | '-' Exp %prec NEG         { Negate $2 }
+    | '(' Exp ')'               { $2 }
 
-Stream : {- empty -}            { [] }
-       | Exp                    { [$1] }
-       | Exp ',' Exp            { $3 : $1 }
+If : if Exp '{' Exp '}'         { If $2 $4 }
+
+Elif : If elif Exp '{' Exp '}'  { Elif $3 $5 }
+
+Else : If else '{' Exp '}'      { Else $4 }
+     | Elif else '{' Exp '}'    { Else $4 }
+
+StreamLiteral : {- empty -}     { [] }
+              | Exp             { [$1] }
+              | Exp ',' Exp     { $3 : $1 }
+
+Type : int_type                 { Int' }
+     | bool_type                { Boolean' }
+     | stream_type              { Stream' }
+
+Assign : var '=' Exp            { Assign $1 $3 }
 
 -- Post-amble
 {
@@ -90,8 +124,6 @@ parseError :: [Token] -> a
 parseError ts = error errorMessage
     where lineCol = words (tokenPosn (last ts))
           errorMessage = "Parse error at line " ++ (lineCol !! 0) ++ ", column " ++ (lineCol !! 1)
-
-type Stream = [Int]
 
 data Type = Int' 
           | Boolean' 
@@ -106,8 +138,8 @@ data Exp = While Exp Exp
          | Size Exp
          | Int Int
          | Boolean Bool
-         | Stream Stream
-         | Var Type String
+         | Stream [Exp]
+         | Var Type Exp
          | LE Exp Exp
          | GE Exp Exp
          | EQ Exp Exp
@@ -115,15 +147,16 @@ data Exp = While Exp Exp
          | Cons Exp Exp
          | Concat Exp Exp
          | Take Exp Exp
-         | Assign Var Exp
+         | Assign String Exp
          | Plus Exp Exp
          | Minus Exp Exp
          | Times Exp Exp
          | Div Exp Exp
-         | StreamGet Exp
+         | StreamGet String Exp
          | InputGet Exp
          | Exponent Exp Exp
          | Modulo Exp Exp
          | LT Exp Exp
          | GT Exp Exp
+         | Negate Exp
 }
