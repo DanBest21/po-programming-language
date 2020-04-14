@@ -18,6 +18,7 @@ import Lexer
     int_type    { TokenIntType _ }
     stream_type { TokenStreamType _ }
     bool_type   { TokenBoolType _ }
+    input       { TokenInput _ }
     while       { TokenWhile _ }
     if          { TokenIf _ }
     elif        { TokenElif _ }
@@ -81,7 +82,7 @@ Exp : while Exp '{' Exp '}'     { While $2 $4 }
     | '[' StreamLiteral ']'     { Stream $2 }
     | Exp '<=' Exp              { LE $1 $3 }
     | Exp '>=' Exp              { GE $1 $3 }
-    | Exp '==' Exp              { EQ $1 $3 }
+    | Exp '==' Exp              { EQ' $1 $3 }
     | Exp '!=' Exp              { NE $1 $3 }
     | Exp ':' Exp               { Cons $1 $3 }
     | Exp '++' Exp              { Concat $1 $3 }
@@ -93,11 +94,12 @@ Exp : while Exp '{' Exp '}'     { While $2 $4 }
     | Exp '*' Exp               { Times $1 $3 }
     | Exp '/' Exp               { Div $1 $3 }
     | var '[' Exp ']'           { StreamGet $1 $3 }
-    | 'input' '{' Exp '}'       { InputGet $3 }
+    | input '{' Exp '}'         { InputGet $3 }
+    | '!' Exp                   { Not $2 }
     | Exp '^' Exp               { Exponent $1 $3 }
     | Exp '%' Exp               { Modulo $1 $3 }
-    | Exp '<' Exp               { LT $1 $3 }
-    | Exp '>' Exp               { GT $1 $3 }
+    | Exp '<' Exp               { LT' $1 $3 }
+    | Exp '>' Exp               { GT' $1 $3 }
     | '-' Exp %prec NEG         { Negate $2 }
     | '(' Exp ')'               { $2 }
 
@@ -142,7 +144,7 @@ data Exp = While Exp Exp
          | Var Type Exp
          | LE Exp Exp
          | GE Exp Exp
-         | EQ Exp Exp
+         | EQ' Exp Exp
          | NE Exp Exp
          | Cons Exp Exp
          | Concat Exp Exp
@@ -154,9 +156,10 @@ data Exp = While Exp Exp
          | Div Exp Exp
          | StreamGet String Exp
          | InputGet Exp
+         | Not Exp
          | Exponent Exp Exp
          | Modulo Exp Exp
-         | LT Exp Exp
-         | GT Exp Exp
+         | LT' Exp Exp
+         | GT' Exp Exp
          | Negate Exp
 }
