@@ -19,7 +19,8 @@ $white+                         ;
 int                             { \p s -> TokenIntType p }
 stream                          { \p s -> TokenStreamType p }
 bool                            { \p s -> TokenBoolType p }
-TokenInput                      { \p s -> TokenInput p }
+input                           { \p s -> TokenInput p }
+print                           { \p s -> TokenPrint p }
 while                           { \p s -> TokenWhile p }
 if                              { \p s -> TokenIf p }
 elif                            { \p s -> TokenElif p }
@@ -62,6 +63,7 @@ data Token =
     TokenStreamType AlexPosn    |
     TokenBoolType AlexPosn      |
     TokenInput AlexPosn         |
+    TokenPrint AlexPosn         |
     TokenWhile AlexPosn         |
     TokenIf AlexPosn            |
     TokenElif AlexPosn          |

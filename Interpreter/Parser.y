@@ -19,6 +19,7 @@ import Lexer
     stream_type { TokenStreamType _ }
     bool_type   { TokenBoolType _ }
     input       { TokenInput _ }
+    print       { TokenPrint _ }
     while       { TokenWhile _ }
     if          { TokenIf _ }
     elif        { TokenElif _ }
@@ -47,7 +48,7 @@ import Lexer
     ']'         { TokenRSquare _ }
     '{'         { TokenLCurly _ }
     '}'         { TokenRCurly _ }
-    ','         { TokenComma _ }
+--    ','         { TokenComma _ }
     '!'         { TokenNot _ }
     '^'         { TokenExponent _ }
     '%'         { TokenModulo _ }
@@ -55,7 +56,7 @@ import Lexer
     '>'         { TokenGT _ }
 
 -- Grammar
-%right '='
+%right '=' print
 %nonassoc if 
 %nonassoc elif 
 %nonassoc else
@@ -68,7 +69,7 @@ import Lexer
 %right '<-' ':'
 %right '^'
 %left has_next next size
-%left STREAMGET INPUTGET
+%left STREAMGET input
 %%
 Exp : while Exp '{' Exp '}'     { While $2 $4 }
     | If                        { $1 }
@@ -79,7 +80,7 @@ Exp : while Exp '{' Exp '}'     { While $2 $4 }
     | size Exp                  { Size $2 }
     | int                       { Int $1 }
     | bool                      { Boolean $1 }
-    | '[' StreamLiteral ']'     { $2 }
+ --   | '[' StreamLiteral ']'     { $2 }
     | Exp '<=' Exp              { LE $1 $3 }
     | Exp '>=' Exp              { GE $1 $3 }
     | Exp '==' Exp              { EQ' $1 $3 }
@@ -93,8 +94,9 @@ Exp : while Exp '{' Exp '}'     { While $2 $4 }
     | Exp '-' Exp               { Minus $1 $3 }
     | Exp '*' Exp               { Times $1 $3 }
     | Exp '/' Exp               { Div $1 $3 }
-    | var '[' Exp ']'           { StreamGet $1 $3 }
-    | input '{' Exp '}'         { InputGet $3 }
+    | var '[' Exp ']' %prec STREAMGET { StreamGet $1 $3 }
+    | input '{' Exp '}' { InputGet $3 }
+    | print Exp                 { Print $2 }
     | '!' Exp                   { Not $2 }
     | Exp '^' Exp               { Exponent $1 $3 }
     | Exp '%' Exp               { Modulo $1 $3 }
@@ -110,9 +112,9 @@ Elif : If elif Exp '{' Exp '}'  { Elif $3 $5 }
 Else : If else '{' Exp '}'      { Else $4 }
      | Elif else '{' Exp '}'    { Else $4 }
 
-StreamLiteral : {- empty -}     { Stream [] }
-              | Exp             { Stream [$1] }
-              | Exp ',' Exp     { Stream $3 : $1 }
+--StreamLiteral : {- empty -}     { Stream [] }
+ --             | Exp             { Stream [$1] }
+  --            | Exp ',' Exp     { Stream $3 : $1 }
 
 Type : int_type                 { Int' }
      | bool_type                { Boolean' }
@@ -130,17 +132,19 @@ parseError ts = error errorMessage
 data Type = Int' 
           | Boolean' 
           | Stream' 
+          deriving(Show)
 
 data Exp = While Exp Exp
          | If Exp Exp
          | Elif Exp Exp
          | Else Exp
+         | Print Exp
          | HasNext Exp
          | Next Exp
          | Size Exp
          | Int Int
          | Boolean Bool
-         | Stream [Exp]
+        | Stream [Exp]
          | Var Type Exp
          | LE Exp Exp
          | GE Exp Exp
@@ -162,4 +166,5 @@ data Exp = While Exp Exp
          | LT' Exp Exp
          | GT' Exp Exp
          | Negate Exp
+         deriving(Show)
 }
