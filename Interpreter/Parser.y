@@ -57,7 +57,7 @@ import Lexer
 
 -- Grammar
 %right '=' print
-%nonassoc if 
+%nonassoc if
 %nonassoc elif 
 %nonassoc else
 %left '==' '!='
@@ -73,7 +73,7 @@ import Lexer
 %%
 Expr : {- empty -}                      { [] }
      | Exp                              { [$1] }
-     | Expr Exp                         { $2 : $1 }
+     | Exp Expr                         { $1 : $2 }
 
 Exp : while Exp '{' Expr '}'            { While $2 $4 }
     | If                                { $1 }
@@ -119,7 +119,7 @@ Else : If else '{' Expr '}'             { Else $4 }
 
 StreamLiteral : {- empty -}             { [] }
               | Exp                     { [$1] }
-              | StreamLiteral ',' Exp   { $3 : $1 }
+              | Exp ',' StreamLiteral   { $1 : $3 }
 
 Type : int_type                         { TypeInt }
      | bool_type                        { TypeBoolean }

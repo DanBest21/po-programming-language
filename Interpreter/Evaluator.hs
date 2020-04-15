@@ -34,6 +34,7 @@ data Frame = HWhile [Exp] Environment
            | HLessThan Exp Environment     | LessThanH Exp
            | HGreaterThan Exp Environment  | GreaterThanH Exp
            | NegateH
+           deriving (Show)
 
 type Kontinuation = [Frame]
 
@@ -62,7 +63,7 @@ isValue _ = False
 evalStep :: State -> State
 
 -- If statement
-evalStep ((If e es) : es', env, k, out) = (e : es, env, (HIf es env) : k, out)
+evalStep ((If e es) : es', env, k, out) = (e : es', env, (HIf es env) : k, out)
 evalStep ((Boolean' b) : es, env, (HIf es' env') : k, out) | b         = (es' ++ es, env, k, out)
                                                            | otherwise = (es, env, k, out)
 
@@ -73,11 +74,9 @@ evalStep ((Int' x) : es, env, (PrintH) : k, out) = (es, env, k, out ++ [x])
 -- Function to iterate the small step reduction to termination.
 evaluate' :: [Exp] -> Output -> Output
 evaluate' es out = evalLoop (es, [], [], out)
-  where evalLoop (es, env, k, out) = if (null es') && (null k) then out' else evalLoop (es', env', k', out')
+  where evalLoop (es, env, k, out) = if (null es') && (null k') then out' else evalLoop (es', env', k', out')
                        where (es', env', k', out') = evalStep (es, env, k, out)
 
 -- Evaluates the list of passed expressions.
 evaluate :: [Exp] -> Output
 evaluate es = evaluate' es []
-
--- evaluate' :: [Exp] -> Environment -> Output -> Output

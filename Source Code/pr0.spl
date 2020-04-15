@@ -1,1 +1,15 @@
-print 5
+if (true)
+{
+    print 5
+    print 15
+    print 19
+
+    if (true)
+    {
+        print 7
+        print 10
+    }
+}
+
+print 6
+print 21
