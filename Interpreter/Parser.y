@@ -82,8 +82,8 @@ Exp : while Exp '{' Expr '}'            { While $2 $4 }
     | has_next Exp                      { HasNext $2 }
     | next Exp                          { Next $2 }
     | size Exp                          { Size $2 }
-    | int                               { Int $1 }
-    | bool                              { Boolean $1 }
+    | int                               { Int' $1 }
+    | bool                              { Boolean' $1 }
     | '[' StreamLiteral ']'             { Stream $2 }
     | Exp '<=' Exp                      { LE $1 $3 }
     | Exp '>=' Exp                      { GE $1 $3 }
@@ -99,7 +99,7 @@ Exp : while Exp '{' Expr '}'            { While $2 $4 }
     | Exp '-' Exp                       { Minus $1 $3 }
     | Exp '*' Exp                       { Times $1 $3 }
     | Exp '/' Exp                       { Div $1 $3 }
-    | var '[' Exp ']' %prec STREAMGET   { StreamGet $1 $3 }
+    | Exp '[' Exp ']' %prec STREAMGET   { StreamGet $1 $3 }
     | input '{' Exp '}'                 { InputGet $3 }
     | print Exp                         { Print $2 }
     | '!' Exp                           { Not $2 }
@@ -121,9 +121,9 @@ StreamLiteral : {- empty -}             { [] }
               | Exp                     { [$1] }
               | StreamLiteral ',' Exp   { $3 : $1 }
 
-Type : int_type                         { Int' }
-     | bool_type                        { Boolean' }
-     | stream_type                      { Stream' }
+Type : int_type                         { TypeInt }
+     | bool_type                        { TypeBoolean }
+     | stream_type                      { TypeStream }
 
 Assign : var '=' Exp                    { Assign $1 $3 }
 
@@ -134,10 +134,10 @@ parseError ts = error errorMessage
     where lineCol = words (tokenPosn (last ts))
           errorMessage = "Parse error at line " ++ (lineCol !! 0) ++ ", column " ++ (lineCol !! 1)
 
-data Type = Int' 
-          | Boolean' 
-          | Stream' 
-          deriving (Show)
+data Type = TypeInt 
+          | TypeBoolean 
+          | TypeStream 
+          deriving (Eq, Show)
 
 data Exp = While Exp [Exp]
          | If Exp [Exp]
@@ -147,8 +147,8 @@ data Exp = While Exp [Exp]
          | HasNext Exp
          | Next Exp
          | Size Exp
-         | Int Int
-         | Boolean Bool
+         | Int' Int
+         | Boolean' Bool
          | Stream [Exp]
          | Var Type Exp
          | VarRef String
@@ -164,7 +164,7 @@ data Exp = While Exp [Exp]
          | Minus Exp Exp
          | Times Exp Exp
          | Div Exp Exp
-         | StreamGet String Exp
+         | StreamGet Exp Exp
          | InputGet Exp
          | Not Exp
          | Exponent Exp Exp
@@ -172,5 +172,5 @@ data Exp = While Exp [Exp]
          | LT' Exp Exp
          | GT' Exp Exp
          | Negate Exp
-         deriving (Show)
+         deriving (Eq, Show)
 }
