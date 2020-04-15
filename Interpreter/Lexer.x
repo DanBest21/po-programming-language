@@ -29,7 +29,8 @@ has_next                        { \p s -> TokenHasNext p }
 next                            { \p s -> TokenNext p }
 size                            { \p s -> TokenSize p }
 $digit+                         { \p s -> TokenInt p (read s) }
-(true)|(false)                  { \p s -> TokenBool p (read s) }
+true                            { \p s -> TokenBool p True }
+false                           { \p s -> TokenBool p False }
 $alpha [$alpha $digit \_]*      { \p s -> TokenVar p s }
 \<\=                            { \p s -> TokenLE p }
 \>\=                            { \p s -> TokenGE p }

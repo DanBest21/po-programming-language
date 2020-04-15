@@ -3,10 +3,10 @@ import Parser
 
 type Environment = [(String, Exp)]
 
-data Frame = HWhile [Exp] Environment      | WhileH Exp
-           | HIf [Exp] Environment         | IfH Exp
-           | HElif [Exp] Environment       | ElifH Exp
-           | HElse [Exp] Environment       | ElseH Exp
+data Frame = HWhile [Exp] Environment
+           | HIf [Exp] Environment
+           | HElif [Exp] Environment
+           | HElse [Exp] Environment
            | PrintH
            | HasNextH
            | NextH
@@ -39,7 +39,7 @@ type Kontinuation = [Frame]
 
 type Output = [Int]
 
-type State = (Exp, Environment, Kontinuation, Output)
+type State = ([Exp], Environment, Kontinuation, Output)
 
 -- Retrieve the value that is bound to the given variable identifier.
 getVariable :: String -> Environment -> Exp
@@ -60,14 +60,24 @@ isValue _ = False
 
 -- Small step evaluation function.
 evalStep :: State -> State
-evalStep _ = ((Int' 0), [], [], [5])
+
+-- If statement
+evalStep ((If e es) : es', env, k, out) = (e : es, env, (HIf es env) : k, out)
+evalStep ((Boolean' b) : es, env, (HIf es' env') : k, out) | b         = (es' ++ es, env, k, out)
+                                                           | otherwise = (es, env, k, out)
+
+-- Print statement
+evalStep ((Print e) : es, env, k, out) = (e : es, env, (PrintH) : k, out)
+evalStep ((Int' x) : es, env, (PrintH) : k, out) = (es, env, k, out ++ [x]) 
 
 -- Function to iterate the small step reduction to termination.
-evaluateExp :: Exp -> Output -> Output
-evaluateExp e out = evalLoop (e, [], [], out)
-  where evalLoop (e, env, k, out) = if (e' == e) && (isValue e') && (null k) then out else evalLoop (e', env', k', out')
-                       where (e', env', k', out') = evalStep (e, env, k, out)
+evaluate' :: [Exp] -> Output -> Output
+evaluate' es out = evalLoop (es, [], [], out)
+  where evalLoop (es, env, k, out) = if (null es') && (null k) then out' else evalLoop (es', env', k', out')
+                       where (es', env', k', out') = evalStep (es, env, k, out)
 
 -- Evaluates the list of passed expressions.
 evaluate :: [Exp] -> Output
-evaluate = foldl evaluateExp []
+evaluate es = evaluate' es []
+
+-- evaluate' :: [Exp] -> Environment -> Output -> Output
