@@ -60,13 +60,14 @@ isValue _ = False
 
 -- Small step evaluation function.
 evalStep :: State -> State
-evalStep _ = ((Int' 0), [], [], [])
+evalStep _ = ((Int' 0), [], [], [5])
 
 -- Function to iterate the small step reduction to termination.
-evaluateExp :: Exp -> Output
-evaluateExp e = evalLoop (e, [], [], [])
+evaluateExp :: Exp -> Output -> Output
+evaluateExp e out = evalLoop (e, [], [], out)
   where evalLoop (e, env, k, out) = if (e' == e) && (isValue e') && (null k) then out else evalLoop (e', env', k', out')
                        where (e', env', k', out') = evalStep (e, env, k, out)
 
+-- Evaluates the list of passed expressions.
 evaluate :: [Exp] -> Output
-evaluate (e : es) = 
+evaluate = foldl evaluateExp []
