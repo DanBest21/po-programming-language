@@ -68,8 +68,8 @@ import Lexer
 %left '++'
 %right '<-' ':'
 %right '^'
-%left has_next next size
-%left input '[' ']'
+%left has_next next size SINGLE_LITERAL
+%left input '[' ']' 
 %%
 Expr : {- empty -}                      { [] }
      | Exp                              { [$1] }
@@ -117,8 +117,8 @@ Elif : If elif Exp '{' Expr '}'         { Elif $3 $5 }
 Else : If else '{' Expr '}'             { Else $4 }
      | Elif else '{' Expr '}'           { Else $4 }
 
-StreamLiteral : {- empty -}             { [] }
-              | Exp                     { [$1] }
+StreamLiteral :  {- empty -}            { [] }
+              | Exp %prec SINGLE_LITERAL { [$1] }
               | Exp ',' StreamLiteral   { $1 : $3 }
 
 Type : int_type                         { TypeInt }
