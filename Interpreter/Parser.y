@@ -69,7 +69,7 @@ import Lexer
 %right '<-' ':'
 %right '^'
 %left has_next next size
-%left STREAMGET input
+%left input '[' ']'
 %%
 Expr : {- empty -}                      { [] }
      | Exp                              { [$1] }
@@ -99,7 +99,7 @@ Exp : while Exp '{' Expr '}'            { While $2 $4 }
     | Exp '-' Exp                       { Minus $1 $3 }
     | Exp '*' Exp                       { Times $1 $3 }
     | Exp '/' Exp                       { Div $1 $3 }
-    | Exp '[' Exp ']' %prec STREAMGET   { StreamGet $1 $3 }
+    | Exp '[' Exp ']'                   { StreamGet $1 $3 }
     | input '{' Exp '}'                 { InputGet $3 }
     | print Exp                         { Print $2 }
     | '!' Exp                           { Not $2 }
