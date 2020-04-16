@@ -56,7 +56,8 @@ updateVariable env x exp = filter ((/= x) . fst) env ++ [(x, exp)]
 isValue :: Exp -> Bool
 isValue (Int' _) = True
 isValue (Boolean' _) = True
-isValue (Stream (e : es)) = isValue e && isValue (Stream es)
+isValue (Stream []) = True
+isValue (Stream (e : es)) = (isValue e) && (isValue (Stream es))
 isValue _ = False
 
 -- Small step evaluation function.
@@ -78,7 +79,7 @@ evalStep ((Int' x) : es, env, (PrintH) : k, out) = (es, env, k, out ++ [x])
 
 -- Has Next statement
 evalStep ((HasNext e) : es, env, k, out) = (e : es, env, (HasNextH) : k, out)
-evalStep ((Stream es) : es', env, (HasNextH) : k, out) = ((Boolean' (null es)) : es', env, k, out)
+evalStep ((Stream es) : es', env, (HasNextH) : k, out) = ((Boolean' (not(null es))) : es', env, k, out)
 
 -- Next statement
 evalStep ((Next e) : es, env, k, out) = (e : es, env, (NextH) : k, out)
