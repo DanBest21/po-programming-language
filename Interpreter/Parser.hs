@@ -1700,7 +1700,7 @@ happyReduction_37 ((HappyAbsSyn9  happy_var_7) `HappyStk`
 	_ `HappyStk`
 	happyRest)
 	 = HappyAbsSyn7
-		 (If happy_var_2 happy_var_4 happy_var_6 happy_var_7
+		 (If ((happy_var_2, happy_var_4) : (happy_var_6 ++ happy_var_7))
 	) `HappyStk` happyRest
 
 happyReduce_38 = happySpecReduce_0  8 happyReduction_38
@@ -1732,7 +1732,7 @@ happyReduction_41 (_ `HappyStk`
 	_ `HappyStk`
 	happyRest)
 	 = HappyAbsSyn9
-		 (happy_var_3
+		 ([(Boolean' True, happy_var_3)]
 	) `HappyStk` happyRest
 
 happyReduce_42 = happySpecReduce_0  10 happyReduction_42
@@ -1874,7 +1874,7 @@ data Type = TypeInt
           deriving (Eq, Show)
 
 data Exp = While Exp [Exp]
-         | If Exp [Exp] [(Exp, [Exp])] [Exp]
+         | If [(Exp, [Exp])]
          | Print Exp
          | HasNext Exp
          | Next Exp

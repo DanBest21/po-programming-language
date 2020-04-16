@@ -1,7 +1,9 @@
 if (true)
 {
 }
+elif (false)
+{
+}
 else
 {
-    print 5
 }

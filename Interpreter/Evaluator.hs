@@ -4,9 +4,7 @@ import Parser
 type Environment = [(String, Exp)]
 
 data Frame = HWhile [Exp] Environment
-           | HIf [Exp] Environment
-           | HElif [Exp] Environment
-           | HElse [Exp] Environment
+           | HIf [(Exp, [Exp])] Environment
            | PrintH
            | HasNextH
            | NextH
@@ -63,7 +61,7 @@ isValue _ = False
 evalStep :: State -> State
 
 -- If statement
-evalStep ((If e es) : es', env, k, out) = (e : es', env, (HIf es env) : k, out)
+evalStep ((If ((e, es) : elifs)) : es', env, k, out) = (e : es', env, (HIf es env) : k, out)
 evalStep ((Boolean' b) : es, env, (HIf es' env') : k, out) | b         = (es' ++ es, env, k, out)
                                                            | otherwise = (es, env, k, out)                                                       
 

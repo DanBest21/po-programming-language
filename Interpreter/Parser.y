@@ -110,13 +110,13 @@ Exp : while Exp '{' Expr '}'             { While $2 $4 }
     | '-' Exp %prec NEG                  { Negate $2 }
     | '(' Exp ')'                        { $2 }
 
-If : if Exp '{' Expr '}' Elif Else       { If $2 $4 $6 $7 }
+If : if Exp '{' Expr '}' Elif Else       { If (($2, $4) : ($6 ++ $7)) }
 
 Elif : {- empty -}                       { [] }
      | elif Exp '{' Expr '}' Elif        { ($2, $4) : $6 }
 
 Else : {- empty -}                       { [] }
-     | else '{' Expr '}'                 { $3 }
+     | else '{' Expr '}'                 { [(Boolean' True, $3)] }
 
 StreamLiteral : {- empty -}              { [] }
               | Exp %prec SINGLE_LITERAL { [$1] }
@@ -141,7 +141,7 @@ data Type = TypeInt
           deriving (Eq, Show)
 
 data Exp = While Exp [Exp]
-         | If Exp [Exp] [(Exp, [Exp])] [Exp]
+         | If [(Exp, [Exp])]
          | Print Exp
          | HasNext Exp
          | Next Exp
