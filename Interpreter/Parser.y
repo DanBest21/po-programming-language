@@ -77,7 +77,7 @@ Expr : {- empty -}                       { [] }
 Exps : Exp                               { [$1] }
      | Exp Exps                          { $1 : $2 }
 
-Exp : while Exp '{' Exps '}'             { While $2 $4 }
+Exp : while Exp '{' Expr '}'             { While $2 $4 }
     | If                                 { $1 }
     | Elif                               { $1 }
     | Else                               { $1 }
@@ -112,12 +112,12 @@ Exp : while Exp '{' Exps '}'             { While $2 $4 }
     | '-' Exp %prec NEG                  { Negate $2 }
     | '(' Exp ')'                        { $2 }
 
-If : if Exp '{' Exps '}'                 { If $2 $4 }
+If : if Exp '{' Expr '}'                 { If $2 $4 }
 
-Elif : If elif Exp '{' Exps '}'          { Elif $3 $5 }
+Elif : If elif Exp '{' Expr '}'          { Elif $3 $5 }
 
-Else : If else '{' Exps '}'              { Else $4 }
-     | Elif else '{' Exps '}'            { Else $4 }
+Else : If else '{' Expr '}'              { Else $4 }
+     | Elif else '{' Expr '}'            { Else $4 }
 
 StreamLiteral : {- empty -}              { [] }
               | Exp %prec SINGLE_LITERAL { [$1] }
