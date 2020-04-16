@@ -3,14 +3,12 @@ import Parser
 
 type Environment = [(String, Exp)]
 
-data Frame = HWhile [Exp] Environment
-           | HIf [(Exp, [Exp])] Environment
+data Frame = HWhile Exp [Exp] Environment
+           | HIf [Exp] [(Exp, [Exp])] Environment
            | PrintH
            | HasNextH
            | NextH
            | SizeH
-           | StreamH
-           | VarH Type
            | VarRefH
            | HLessEqual Exp Environment    | LessEqualH Exp
            | HGreaterEqual Exp Environment | GreaterEqualH Exp 
@@ -60,14 +58,35 @@ isValue _ = False
 -- Small step evaluation function.
 evalStep :: State -> State
 
--- If statement
-evalStep ((If ((e, es) : elifs)) : es', env, k, out) = (e : es', env, (HIf es env) : k, out)
-evalStep ((Boolean' b) : es, env, (HIf es' env') : k, out) | b         = (es' ++ es, env, k, out)
-                                                           | otherwise = (es, env, k, out)                                                       
+-- While statement
+evalStep ((While e es) : es', env, k, out) = (e : es', env, (HWhile e es env) : k, out)
+evalStep ((Boolean' b) : es, env, (HWhile e es' env') : k, out) | b         = (es' ++ [While e es'] ++ es, env, k, out)
+                                                                | otherwise = (es, env, k, out)                                                       
+
+-- If/Elif/Else statement
+evalStep ((If ((e, es) : elifs)) : es', env, k, out) = (e : es', env, (HIf es elifs env) : k, out)
+evalStep ((Boolean' b) : es, env, (HIf es' elifs env') : k, out) | b         = (es' ++ es, env, k, out)
+                                                                 | otherwise = ((If elifs) : es, env, k, out)                                                       
 
 -- Print statement
 evalStep ((Print e) : es, env, k, out) = (e : es, env, (PrintH) : k, out)
-evalStep ((Int' x) : es, env, (PrintH) : k, out) = (es, env, k, out ++ [x]) 
+evalStep ((Int' x) : es, env, (PrintH) : k, out) = (es, env, k, out ++ [x])
+
+-- Has Next statement
+evalStep ((HasNext e) : es, env, k, out) = (e : es, env, (HasNextH) : k, out)
+evalStep ((Stream es) : es', env, (HasNextH) : k, out) = ((Boolean' (null es)) : es', env, k, out)
+
+-- Next statement
+evalStep ((Next e) : es, env, k, out) = (e : es, env, (NextH) : k, out)
+evalStep ((Stream (e : es)) : es', env, (NextH) : k, out) = (e : es', env, k, out)
+
+-- Size statement
+evalStep ((Size e) : es, env, k, out) = (e : es, env, (SizeH) : k, out)
+evalStep ((Stream es) : es', env, (SizeH) : k, out) = ((Int' (length es)) : es', env, k, out)
+
+-- Variable statement
+-- evalStep ((Var t (Assign x e)) : es, env, k, out) = (x : es, env (HAssign e env) : k, out)
+-- evalStep (e : es, env, (VarH t) : k, out) | isValue
 
 -- Function to iterate the small step reduction to termination.
 evaluate' :: [Exp] -> Output -> Output

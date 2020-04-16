@@ -92,8 +92,8 @@ Exp : while Exp '{' Expr '}'             { While $2 $4 }
     | Exp ':' Exp                        { Cons $1 $3 }
     | Exp '++' Exp                       { Concat $1 $3 }
     | Exp '<-' Exp                       { Take $1 $3 }
-    | Type Assign                        { Var $1 $2 }
-    | Assign                             { $1 }
+    | Type var '=' Exp                   { VarDec $1 $2 $4 }
+    | var '=' Exp                        { VarAssign $1 $3 }
     | var                                { VarRef $1 }
     | Exp '+' Exp                        { Plus $1 $3 }
     | Exp '-' Exp                        { Minus $1 $3 }
@@ -126,8 +126,6 @@ Type : int_type                          { TypeInt }
      | bool_type                         { TypeBoolean }
      | stream_type                       { TypeStream }
 
-Assign : var '=' Exp                     { Assign $1 $3 }
-
 -- Post-amble
 {
 parseError :: [Token] -> a
@@ -149,7 +147,8 @@ data Exp = While Exp [Exp]
          | Int' Int
          | Boolean' Bool
          | Stream [Exp]
-         | Var Type Exp
+         | VarDec Type String Exp
+         | VarAssign String Exp
          | VarRef String
          | LE Exp Exp
          | GE Exp Exp
@@ -158,7 +157,6 @@ data Exp = While Exp [Exp]
          | Cons Exp Exp
          | Concat Exp Exp
          | Take Exp Exp
-         | Assign String Exp
          | Plus Exp Exp
          | Minus Exp Exp
          | Times Exp Exp
