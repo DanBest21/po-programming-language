@@ -9,7 +9,8 @@ data Frame = HWhile Exp [Exp] Environment
            | HasNextH
            | NextH
            | SizeH
-           | VarRefH
+           | VarDecH String
+           | VarAssignH String
            | HLessEqual Exp Environment    | LessEqualH Exp
            | HGreaterEqual Exp Environment | GreaterEqualH Exp 
            | HEqual Exp Environment        | EqualH Exp
@@ -17,7 +18,6 @@ data Frame = HWhile Exp [Exp] Environment
            | HCons Exp Environment         | ConsH Exp
            | HConcat Exp Environment       | ConcatH Exp
            | HTake Exp Environment         | TakeH Exp
-           | HAssign Exp Environment       | AssignH String
            | HPlus Exp Environment         | PlusH Exp
            | HMinus Exp Environment        | MinusH Exp
            | HTimes Exp Environment        | TimesH Exp
@@ -44,9 +44,13 @@ getVariable x [] = error ("Unrecognised variable " ++ x)
 getVariable x ((y, exp) : env) | x == y    = exp
                                | otherwise = getVariable x env
 
--- Updating environment with new variable binding.
-update :: Environment -> String -> Exp -> Environment
-update env x exp = (x, exp) : env                              
+-- Sets a new variable in the passed environment.
+setVariable :: Environment -> String -> Exp -> Environment
+setVariable env x exp = (x, exp) : env
+
+-- Updates an existing environment in the passed environment
+updateVariable :: Environment -> String -> Exp -> Environment
+updateVariable env x exp = filter ((/= x) . fst) env ++ [(x, exp)] 
 
 -- Checks for terminated expressions.
 isValue :: Exp -> Bool
@@ -60,13 +64,13 @@ evalStep :: State -> State
 
 -- While statement
 evalStep ((While e es) : es', env, k, out) = (e : es', env, (HWhile e es env) : k, out)
-evalStep ((Boolean' b) : es, env, (HWhile e es' env') : k, out) | b         = (es' ++ [While e es'] ++ es, env, k, out)
+evalStep ((Boolean' b) : es, env, (HWhile e es' env') : k, out) | b         = (es' ++ [While e es'] ++ es, env', k, out)
                                                                 | otherwise = (es, env, k, out)                                                       
 
 -- If/Elif/Else statement
 evalStep ((If ((e, es) : elifs)) : es', env, k, out) = (e : es', env, (HIf es elifs env) : k, out)
-evalStep ((Boolean' b) : es, env, (HIf es' elifs env') : k, out) | b         = (es' ++ es, env, k, out)
-                                                                 | otherwise = ((If elifs) : es, env, k, out)                                                       
+evalStep ((Boolean' b) : es, env, (HIf es' elifs env') : k, out) | b         = (es' ++ es, env', k, out)
+                                                                 | otherwise = ((If elifs) : es, env', k, out)                                                       
 
 -- Print statement
 evalStep ((Print e) : es, env, k, out) = (e : es, env, (PrintH) : k, out)
@@ -79,14 +83,23 @@ evalStep ((Stream es) : es', env, (HasNextH) : k, out) = ((Boolean' (null es)) :
 -- Next statement
 evalStep ((Next e) : es, env, k, out) = (e : es, env, (NextH) : k, out)
 evalStep ((Stream (e : es)) : es', env, (NextH) : k, out) = (e : es', env, k, out)
+evalStep ((VarRef x) : es, env, (NextH) : k, out) = (e : es, updateVariable env x (Stream es'), k, out)
+      where (Stream (e : es')) = getVariable x env
 
 -- Size statement
 evalStep ((Size e) : es, env, k, out) = (e : es, env, (SizeH) : k, out)
 evalStep ((Stream es) : es', env, (SizeH) : k, out) = ((Int' (length es)) : es', env, k, out)
 
--- Variable statement
--- evalStep ((Var t (Assign x e)) : es, env, k, out) = (x : es, env (HAssign e env) : k, out)
--- evalStep (e : es, env, (VarH t) : k, out) | isValue
+-- Variable declaration statement
+evalStep ((VarDec t x e) : es, env, k, out) = (e : es, env, (VarDecH x) : k, out)
+evalStep (e : es, env, (VarDecH x) : k, out) | isValue e = (es, setVariable env x e, k, out)
+
+-- Variable assignment statement
+evalStep ((VarAssign x e) : es, env, k, out) = (e : es, env, (VarAssignH x) : k, out)
+evalStep (e : es, env, (VarAssignH x) : k, out) | isValue e = (es, updateVariable env x e, k, out)
+
+-- Variable reference statement
+evalStep ((VarRef x) : es, env, k, out) = ((getVariable x env) : es, env, k, out)
 
 -- Function to iterate the small step reduction to termination.
 evaluate' :: [Exp] -> Output -> Output
