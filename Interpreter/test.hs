@@ -10,7 +10,7 @@ main = do
     file3 <- readFile "../Source Code/pr3.spl"
     file4 <- readFile "../Source Code/pr4.spl"
     file5 <- readFile "../Source Code/pr5.spl"
-    putStrLn ("TEST: " ++ show (evaluate (parse $ alexScanTokens file0)))
+    putStrLn ("TEST: " ++ show (parse $ alexScanTokens file0))
     putStrLn ("1. " ++ show (parse $ alexScanTokens file1))
     putStrLn ("2. " ++ show (parse (alexScanTokens file2)))
     putStrLn ("3. " ++ show (parse (alexScanTokens file3)))

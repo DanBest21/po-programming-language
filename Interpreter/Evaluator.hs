@@ -65,7 +65,7 @@ evalStep :: State -> State
 -- If statement
 evalStep ((If e es) : es', env, k, out) = (e : es', env, (HIf es env) : k, out)
 evalStep ((Boolean' b) : es, env, (HIf es' env') : k, out) | b         = (es' ++ es, env, k, out)
-                                                           | otherwise = (es, env, k, out)
+                                                           | otherwise = (es, env, k, out)                                                       
 
 -- Print statement
 evalStep ((Print e) : es, env, k, out) = (e : es, env, (PrintH) : k, out)
