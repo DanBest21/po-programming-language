@@ -71,61 +71,63 @@ import Lexer
 %left has_next next size SINGLE_LITERAL
 %left input '[' ']'
 %%
-Exps : {- empty -}                      { [] }
-     | Exp                              { [$1] }
-     | Exp Exps                         { $1 : $2 }
+Expr : {- empty -}                       { [] }
+     | Exps                              { $1 }
 
-Exp : while Exp '{' Exps '}'            { While $2 $4 }
-    | If                                { $1 }
-    | Elif                              { $1 }
-    | Else                              { $1 }
-    | has_next Exp                      { HasNext $2 }
-    | next Exp                          { Next $2 }
-    | size Exp                          { Size $2 }
-    | int                               { Int' $1 }
-    | bool                              { Boolean' $1 }
-    | '[' StreamLiteral ']'             { Stream $2 }
-    | Exp '<=' Exp                      { LE $1 $3 }
-    | Exp '>=' Exp                      { GE $1 $3 }
-    | Exp '==' Exp                      { EQ' $1 $3 }
-    | Exp '!=' Exp                      { NE $1 $3 }
-    | Exp ':' Exp                       { Cons $1 $3 }
-    | Exp '++' Exp                      { Concat $1 $3 }
-    | Exp '<-' Exp                      { Take $1 $3 }
-    | Type Assign                       { Var $1 $2 }
-    | Assign                            { $1 }
-    | var                               { VarRef $1 }
-    | Exp '+' Exp                       { Plus $1 $3 }
-    | Exp '-' Exp                       { Minus $1 $3 }
-    | Exp '*' Exp                       { Times $1 $3 }
-    | Exp '/' Exp                       { Div $1 $3 }
-    | Exp '[' Exp ']'                   { StreamGet $1 $3 }
-    | input '{' Exp '}'                 { InputGet $3 }
-    | print Exp                         { Print $2 }
-    | '!' Exp                           { Not $2 }
-    | Exp '^' Exp                       { Exponent $1 $3 }
-    | Exp '%' Exp                       { Modulo $1 $3 }
-    | Exp '<' Exp                       { LT' $1 $3 }
-    | Exp '>' Exp                       { GT' $1 $3 }
-    | '-' Exp %prec NEG                 { Negate $2 }
-    | '(' Exp ')'                       { $2 }
+Exps : Exp                               { [$1] }
+     | Exp Exps                          { $1 : $2 }
 
-If : if Exp '{' Exps '}'                { If $2 $4 }
+Exp : while Exp '{' Exps '}'             { While $2 $4 }
+    | If                                 { $1 }
+    | Elif                               { $1 }
+    | Else                               { $1 }
+    | has_next Exp                       { HasNext $2 }
+    | next Exp                           { Next $2 }
+    | size Exp                           { Size $2 }
+    | int                                { Int' $1 }
+    | bool                               { Boolean' $1 }
+    | '[' StreamLiteral ']'              { Stream $2 }
+    | Exp '<=' Exp                       { LE $1 $3 }
+    | Exp '>=' Exp                       { GE $1 $3 }
+    | Exp '==' Exp                       { EQ' $1 $3 }
+    | Exp '!=' Exp                       { NE $1 $3 }
+    | Exp ':' Exp                        { Cons $1 $3 }
+    | Exp '++' Exp                       { Concat $1 $3 }
+    | Exp '<-' Exp                       { Take $1 $3 }
+    | Type Assign                        { Var $1 $2 }
+    | Assign                             { $1 }
+    | var                                { VarRef $1 }
+    | Exp '+' Exp                        { Plus $1 $3 }
+    | Exp '-' Exp                        { Minus $1 $3 }
+    | Exp '*' Exp                        { Times $1 $3 }
+    | Exp '/' Exp                        { Div $1 $3 }
+    | Exp '[' Exp ']'                    { StreamGet $1 $3 }
+    | input '{' Exp '}'                  { InputGet $3 }
+    | print Exp                          { Print $2 }
+    | '!' Exp                            { Not $2 }
+    | Exp '^' Exp                        { Exponent $1 $3 }
+    | Exp '%' Exp                        { Modulo $1 $3 }
+    | Exp '<' Exp                        { LT' $1 $3 }
+    | Exp '>' Exp                        { GT' $1 $3 }
+    | '-' Exp %prec NEG                  { Negate $2 }
+    | '(' Exp ')'                        { $2 }
 
-Elif : If elif Exp '{' Exps '}'         { Elif $3 $5 }
+If : if Exp '{' Exps '}'                 { If $2 $4 }
 
-Else : If else '{' Exps '}'             { Else $4 }
-     | Elif else '{' Exps '}'           { Else $4 }
+Elif : If elif Exp '{' Exps '}'          { Elif $3 $5 }
 
-StreamLiteral :  {- empty -}            { [] }
+Else : If else '{' Exps '}'              { Else $4 }
+     | Elif else '{' Exps '}'            { Else $4 }
+
+StreamLiteral : {- empty -}              { [] }
               | Exp %prec SINGLE_LITERAL { [$1] }
-              | Exp ',' StreamLiteral   { $1 : $3 }
+              | Exp ',' StreamLiteral    { $1 : $3 }
 
-Type : int_type                         { TypeInt }
-     | bool_type                        { TypeBoolean }
-     | stream_type                      { TypeStream }
+Type : int_type                          { TypeInt }
+     | bool_type                         { TypeBoolean }
+     | stream_type                       { TypeStream }
 
-Assign : var '=' Exp                    { Assign $1 $3 }
+Assign : var '=' Exp                     { Assign $1 $3 }
 
 -- Post-amble
 {
