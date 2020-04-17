@@ -152,6 +152,8 @@ data Exp = While Exp [Exp]
          | VarRef String
          | LE Exp Exp
          | GE Exp Exp
+         | LT' Exp Exp
+         | GT' Exp Exp
          | EQ' Exp Exp
          | NE Exp Exp
          | Cons Exp Exp
@@ -166,8 +168,6 @@ data Exp = While Exp [Exp]
          | Not Exp
          | Exponent Exp Exp
          | Modulo Exp Exp
-         | LT' Exp Exp
-         | GT' Exp Exp
          | Negate Exp
          deriving (Eq, Show)
 }

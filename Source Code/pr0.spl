@@ -1,8 +1,7 @@
-stream x = [1, 2, 3, 4, 5]
+int x = 0
 
-print (size x)
-
-while (has_next x)
+while (!(x > 5))
 {
-    print (next x)
+    print x
+    x = x + 1
 }

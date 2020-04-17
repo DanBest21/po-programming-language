@@ -12,7 +12,9 @@ data Frame = HWhile Exp [Exp] Environment
            | VarDecH String
            | VarAssignH String
            | HLessEqual Exp Environment    | LessEqualH Exp
-           | HGreaterEqual Exp Environment | GreaterEqualH Exp 
+           | HGreaterEqual Exp Environment | GreaterEqualH Exp
+           | HLessThan Exp Environment     | LessThanH Exp
+           | HGreaterThan Exp Environment  | GreaterThanH Exp 
            | HEqual Exp Environment        | EqualH Exp
            | HNotEqual Exp Environment     | NotEqualH Exp
            | HCons Exp Environment         | ConsH Exp
@@ -27,8 +29,6 @@ data Frame = HWhile Exp [Exp] Environment
            | NotH
            | HExponent Exp Environment     | ExponentH Exp
            | HModulo Exp Environment       | ModuloH Exp
-           | HLessThan Exp Environment     | LessThanH Exp
-           | HGreaterThan Exp Environment  | GreaterThanH Exp
            | NegateH
            deriving (Show)
 
@@ -70,8 +70,8 @@ evalStep ((Boolean' b) : es, env, (HWhile e es' env') : k, out) | b         = (e
 
 -- If/Elif/Else statement
 evalStep ((If ((e, es) : elifs)) : es', env, k, out) = (e : es', env, (HIf es elifs env) : k, out)
-evalStep ((Boolean' b) : es, env, (HIf es' elifs env') : k, out) | b         = (es' ++ es, env', k, out)
-                                                                 | otherwise = ((If elifs) : es, env', k, out)                                                       
+evalStep ((Boolean' b) : es', env, (HIf es elifs env') : k, out) | b         = (es ++ es', env', k, out)
+                                                                 | otherwise = ((If elifs) : es', env', k, out)                                                       
 
 -- Print statement
 evalStep ((Print e) : es, env, k, out) = (e : es, env, (PrintH) : k, out)
@@ -101,6 +101,82 @@ evalStep (e : es, env, (VarAssignH x) : k, out) | isValue e = (es, updateVariabl
 
 -- Variable reference statement
 evalStep ((VarRef x) : es, env, k, out) = ((getVariable x env) : es, env, k, out)
+
+-- Less than or equal to statement
+evalStep ((LE e1 e2) : es, env, k, out) = (e1 : es, env, (HLessEqual e2 env) : k, out)
+evalStep ((Int' x) : es, env, (HLessEqual e env') : k, out) = (e : es, env', (LessEqualH (Int' x)) : k, out)
+evalStep ((Int' y) : es, env, (LessEqualH (Int' x)) : k, out) | x <= y    = ((Boolean' True) : es, env, k, out)
+                                                              | otherwise = ((Boolean' False) : es, env, k, out)
+
+-- Greater than or equal to statement
+evalStep ((GE e1 e2) : es, env, k, out) = (e1 : es, env, (HGreaterEqual e2 env) : k, out)
+evalStep ((Int' x) : es, env, (HGreaterEqual e env') : k, out) = (e : es, env', (GreaterEqualH (Int' x)) : k, out)
+evalStep ((Int' y) : es, env, (GreaterEqualH (Int' x)) : k, out) | x >= y    = ((Boolean' True) : es, env, k, out)
+                                                                 | otherwise = ((Boolean' False) : es, env, k, out)
+
+-- Less than statement
+evalStep ((LT' e1 e2) : es, env, k, out) = (e1 : es, env, (HLessThan e2 env) : k, out)
+evalStep ((Int' x) : es, env, (HLessThan e env') : k, out) = (e : es, env', (LessThanH (Int' x)) : k, out)
+evalStep ((Int' y) : es, env, (LessThanH (Int' x)) : k, out) | x < y     = ((Boolean' True) : es, env, k, out)
+                                                             | otherwise = ((Boolean' False) : es, env, k, out)
+
+-- Greater than statement
+evalStep ((GT' e1 e2) : es, env, k, out) = (e1 : es, env, (HGreaterThan e2 env) : k, out)
+evalStep ((Int' x) : es, env, (HGreaterThan e env') : k, out) = (e : es, env', (GreaterThanH (Int' x)) : k, out)
+evalStep ((Int' y) : es, env, (GreaterThanH (Int' x)) : k, out) | x > y     = ((Boolean' True) : es, env, k, out)
+                                                                | otherwise = ((Boolean' False) : es, env, k, out)
+
+-- Equals statement
+
+-- Not equals statement
+
+-- Cons statement
+
+-- Concat statement
+
+-- Take statement
+
+-- Add/Plus statement
+evalStep ((Plus e1 e2) : es, env, k, out) = (e1 : es, env, (HPlus e2 env) : k, out)
+evalStep ((Int' x) : es, env, (HPlus e env') : k, out) = (e : es, env', (PlusH (Int' x)) : k, out)
+evalStep ((Int' y) : es, env, (PlusH (Int' x)) : k, out) = ((Int' (x + y)) : es, env, k, out)
+
+-- Subtract/Minus statement
+evalStep ((Minus e1 e2) : es, env, k, out) = (e1 : es, env, (HMinus e2 env) : k, out)
+evalStep ((Int' x) : es, env, (HMinus e env') : k, out) = (e : es, env', (MinusH (Int' x)) : k, out)
+evalStep ((Int' y) : es, env, (MinusH (Int' x)) : k, out) = ((Int' (x - y)) : es, env, k, out)
+
+-- Multiply/Times statement
+evalStep ((Times e1 e2) : es, env, k, out) = (e1 : es, env, (HTimes e2 env) : k, out)
+evalStep ((Int' x) : es, env, (HTimes e env') : k, out) = (e : es, env', (TimesH (Int' x)) : k, out)
+evalStep ((Int' y) : es, env, (TimesH (Int' x)) : k, out) = ((Int' (x * y)) : es, env, k, out)
+
+-- Divide statement
+evalStep ((Div e1 e2) : es, env, k, out) = (e1 : es, env, (HDiv e2 env) : k, out)
+evalStep ((Int' x) : es, env, (HDiv e env') : k, out) = (e : es, env', (DivH (Int' x)) : k, out)
+evalStep ((Int' y) : es, env, (DivH (Int' x)) : k, out) = ((Int' (x `div` y)) : es, env, k, out)
+
+-- Stream get (by index) statement
+
+-- Input get (by index) statement
+
+-- Not statement
+evalStep ((Not e) : es, env, k, out) = (e : es, env, (NotH) : k, out)
+evalStep ((Boolean' b) : es, env, (NotH) : k, out) = ((Boolean' (not(b))) : es, env, k, out)
+
+-- Exponent statement
+evalStep ((Exponent e1 e2) : es, env, k, out) = (e1 : es, env, (HExponent e2 env) : k, out)
+evalStep ((Int' x) : es, env, (HExponent e env') : k, out) = (e : es, env', (ExponentH (Int' x)) : k, out)
+evalStep ((Int' y) : es, env, (ExponentH (Int' x)) : k, out) = ((Int' (x ^ y)) : es, env, k, out)
+
+-- Modulo statement
+evalStep ((Modulo e1 e2) : es, env, k, out) = (e1 : es, env, (HModulo e2 env) : k, out)
+evalStep ((Int' x) : es, env, (HModulo e env') : k, out) = (e : es, env', (ModuloH (Int' x)) : k, out)
+evalStep ((Int' y) : es, env, (ModuloH (Int' x)) : k, out) = ((Int' (x `mod` y)) : es, env, k, out)
+
+-- Negate statement
+evalStep ((Negate e) : es, env, k, out) = (e : es, env, (NegateH) : k, out)
+evalStep ((Int' x) : es, env, (NegateH) : k, out) = ((Int' (negate x)) : es, env, k, out)
 
 -- Function to iterate the small step reduction to termination.
 evaluate' :: [Exp] -> Output -> Output
