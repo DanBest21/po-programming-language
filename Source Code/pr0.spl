@@ -1,2 +1,5 @@
-next input{1}
 print input{1}[1]
+print (next input{1})
+print (next input{1})
+print input{1}[1]
+print input{1}[3]
