@@ -147,9 +147,6 @@ data Exp = While Exp [Exp]
          | Int' Int
          | Boolean' Bool
          | Stream [Exp]
-         | VarDec Type String Exp
-         | VarAssign String Exp
-         | VarRef String
          | LE Exp Exp
          | GE Exp Exp
          | LT' Exp Exp
@@ -169,5 +166,8 @@ data Exp = While Exp [Exp]
          | Exponent Exp Exp
          | Modulo Exp Exp
          | Negate Exp
+         | VarDec Type String Exp
+         | VarAssign String Exp
+         | VarRef String
          deriving (Eq, Show)
 }

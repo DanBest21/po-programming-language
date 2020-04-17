@@ -9,8 +9,6 @@ data Frame = HWhile Exp [Exp]
            | HasNextH
            | NextH
            | SizeH
-           | VarDecH String
-           | VarAssignH String
            | HLessEqual Exp    | LessEqualH Exp
            | HGreaterEqual Exp | GreaterEqualH Exp
            | HLessThan Exp     | LessThanH Exp
@@ -30,6 +28,8 @@ data Frame = HWhile Exp [Exp]
            | HExponent Exp     | ExponentH Exp
            | HModulo Exp       | ModuloH Exp
            | NegateH
+           | VarDecH String
+           | VarAssignH String
            deriving (Show)
 
 type Kontinuation = [Frame]
@@ -75,7 +75,7 @@ evalStep ((Boolean' b) : es', env, (HIf es elifs) : k, io) | b         = (es ++ 
 
 -- Print statement
 evalStep ((Print e) : es, env, k, io) = (e : es, env, (PrintH) : k, io)
-evalStep ((Int' x) : es, env, (PrintH) : k, io) = (es, env, k, (fst io, snd io ++ [x]))
+evalStep ((Int' x) : es, env, (PrintH) : k, (input, output)) = (es, env, k, (input, output ++ [x]))
 
 -- Has Next statement
 evalStep ((HasNext e) : es, env, k, io) = (e : es, env, (HasNextH) : k, io)
@@ -90,17 +90,6 @@ evalStep ((VarRef x) : es, env, (NextH) : k, io) = (e : es, updateVariable env x
 -- Size statement
 evalStep ((Size e) : es, env, k, io) = (e : es, env, (SizeH) : k, io)
 evalStep ((Stream es) : es', env, (SizeH) : k, io) = ((Int' (length es)) : es', env, k, io)
-
--- Variable declaration statement
-evalStep ((VarDec t x e) : es, env, k, io) = (e : es, env, (VarDecH x) : k, io)
-evalStep (e : es, env, (VarDecH x) : k, io) | isValue e = (es, setVariable env x e, k, io)
-
--- Variable assignment statement
-evalStep ((VarAssign x e) : es, env, k, io) = (e : es, env, (VarAssignH x) : k, io)
-evalStep (e : es, env, (VarAssignH x) : k, io) | isValue e = (es, updateVariable env x e, k, io)
-
--- Variable reference statement
-evalStep ((VarRef x) : es, env, k, io) = ((getVariable x env) : es, env, k, io)
 
 -- Less than or equal to statement
 evalStep ((LE e1 e2) : es, env, k, io) = (e1 : es, env, (HLessEqual e2) : k, io)
@@ -143,6 +132,11 @@ evalStep ((Stream e1) : es, env, (HConcat e2) : k, io) = (e2 : es, env, (ConcatH
 evalStep ((Stream e2) : es, env, (ConcatH (Stream e1)) : k, io) = ((Stream (e1 ++ e2)) : es, env, k, io)  
 
 -- Take statement
+evalStep ((Take e1 e2) : es, env, k, io) = (e1 : es, env, (HTake e2) : k, io)
+evalStep ((Int' x) : es, env, (HTake e2) : k, io) = (e2 : es, env, (TakeH (Int' x)) : k, io)
+evalStep ((Stream e2) : es, env, (TakeH (Int' x)) : k, io) = ((Stream (take x e2)) : es, env, k, io)
+evalStep ((VarRef y) : es, env, (TakeH (Int' x)) : k, io) = ((Stream (take x e2)) : es, updateVariable env y (Stream (drop x e2)), k, io)
+      where (Stream e2) = getVariable y env 
 
 -- Add/Plus statement
 evalStep ((Plus e1 e2) : es, env, k, io) = (e1 : es, env, (HPlus e2) : k, io)
@@ -165,8 +159,13 @@ evalStep ((Int' x) : es, env, (HDiv e2) : k, io) = (e2 : es, env, (DivH (Int' x)
 evalStep ((Int' y) : es, env, (DivH (Int' x)) : k, io) = ((Int' (x `div` y)) : es, env, k, io)
 
 -- Stream get (by index) statement
+evalStep ((StreamGet e1 e2) : es, env, k, io) = (e1 : es, env, (HStreamGet e2) : k, io)
+evalStep ((Stream e1) : es, env, (HStreamGet e2) : k, io) = (e2 : es, env, (StreamGetH (Stream e1)) : k, io)
+evalStep ((Int' x) : es, env, (StreamGetH (Stream e1)) : k, io) = ((e1 !! (x - 1)) : es, env, k, io)
 
 -- Input get (by index) statement
+evalStep ((InputGet e) : es, env, k, io) = (e : es, env, (InputGetH) : k, io)
+evalStep ((Int' x) : es, env, (InputGetH) : k, (input, output)) = ((input !! (x - 1)) : es, env, k, (input, output))
 
 -- Not statement
 evalStep ((Not e) : es, env, k, io) = (e : es, env, (NotH) : k, io)
@@ -186,6 +185,17 @@ evalStep ((Int' y) : es, env, (ModuloH (Int' x)) : k, io) = ((Int' (x `mod` y)) 
 evalStep ((Negate e) : es, env, k, io) = (e : es, env, (NegateH) : k, io)
 evalStep ((Int' x) : es, env, (NegateH) : k, io) = ((Int' (negate x)) : es, env, k, io)
 
+-- Variable declaration statement
+evalStep ((VarDec t x e) : es, env, k, io) = (e : es, env, (VarDecH x) : k, io)
+evalStep (e : es, env, (VarDecH x) : k, io) | isValue e = (es, setVariable env x e, k, io)
+
+-- Variable assignment statement
+evalStep ((VarAssign x e) : es, env, k, io) = (e : es, env, (VarAssignH x) : k, io)
+evalStep (e : es, env, (VarAssignH x) : k, io) | isValue e = (es, updateVariable env x e, k, io)
+
+-- Variable reference statement
+evalStep ((VarRef x) : es, env, k, io) = ((getVariable x env) : es, env, k, io)
+
 -- Catch idempotent statements.
 evalStep (e : es, env, [], io) | isValue e = (es, env, [], io)
 
@@ -196,5 +206,5 @@ evaluate' es io = evalLoop (es, [], [], io)
                        where (es', env', k', io') = evalStep (es, env, k, io)
 
 -- Evaluates the list of passed expressions.
-evaluate :: [Exp] -> InputOutput
-evaluate es = evaluate' es ([],[])
+evaluate :: [Exp] -> [Exp] -> InputOutput
+evaluate es input = evaluate' es ([Stream [Int' 1]], [])
