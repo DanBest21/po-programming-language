@@ -1,5 +1,6 @@
 stream y = [1, 2, 3, 4, 5]
 
-5 : [1, 2, 3, 4, 5]
+5 : y
+next y
 
 print (next y)

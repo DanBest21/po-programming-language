@@ -186,6 +186,9 @@ evalStep ((Int' y) : es, env, (ModuloH (Int' x)) : k, io) = ((Int' (x `mod` y)) 
 evalStep ((Negate e) : es, env, k, io) = (e : es, env, (NegateH) : k, io)
 evalStep ((Int' x) : es, env, (NegateH) : k, io) = ((Int' (negate x)) : es, env, k, io)
 
+-- Catch idempotent statements.
+evalStep (e : es, env, [], io) | isValue e = (es, env, [], io)
+
 -- Function to iterate the small step reduction to termination.
 evaluate' :: [Exp] -> InputOutput -> InputOutput
 evaluate' es io = evalLoop (es, [], [], io)
