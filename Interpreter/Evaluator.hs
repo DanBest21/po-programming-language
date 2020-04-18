@@ -212,4 +212,4 @@ evaluate' es input = evalLoop (es, env, [], [])
 
 -- Evaluates the list of passed expressions.
 evaluate :: [Exp] -> [Exp] -> Output
-evaluate es input = evaluate' es ([Stream [Int' 1, Int' 2, Int' 3, Int' 4, Int' 5]])
+evaluate es input = evaluate' es input

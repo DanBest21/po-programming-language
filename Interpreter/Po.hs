@@ -2,7 +2,7 @@ import Lexer
 import Parser
 import Evaluator
 import System.Environment
-import Control.Exception
+import Control.Exception hiding (evaluate)
 import System.IO
 
 main :: IO ()
@@ -11,9 +11,20 @@ main = catch main' noParse
 main' = do (fileName : _ ) <- getArgs 
            sourceCode <- readFile fileName
            putStrLn ("Compiling " ++ (show fileName) ++ "...")
-           evaluate $ parse $ alexScanTokens $ sourceCode
+           contents <- getContents
+           let input = streams_convert $ streams_split contents
+           let output = evaluate (parse $ alexScanTokens $ sourceCode) input
+           mapM_ (putStrLn . show) output
 
 noParse :: ErrorCall -> IO ()
 noParse e = do let err = show e
                hPutStr stderr err
                return ()
+
+streams_split :: String -> [[Int]] -- List of streams
+streams_split s = map (\i -> map (read . (!! i)) horizontal) [0..(stream_len-1)]
+              where horizontal = filter (not . null) $ map words (lines s)
+                    stream_len = length $ head $ horizontal
+
+streams_convert :: [[Int]] -> [Exp]
+streams_convert = map (\xs -> Stream (map Int' xs))
