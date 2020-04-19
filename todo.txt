@@ -1,0 +1,7 @@
+1. type checker
+2. functions
+3. process
+4. try to get more accurate parsing error messages
+5. += -= etc.
+-- CONSIDER BEFORE DOING THIS
+6. better type error messages (line and col number for AlexPosn; show error line from source code)
