@@ -1859,7 +1859,8 @@ parseError ts = error errorMessage
     where lineCol = words (tokenPosn (last ts))
           errorMessage = "Parse error at line " ++ (lineCol !! 0) ++ ", column " ++ (lineCol !! 1)
 
-data Type = TypeInt 
+data Type = TypeNone
+          | TypeInt 
           | TypeBoolean 
           | TypeStream 
           deriving (Eq, Show)
@@ -1873,11 +1874,10 @@ data Exp = While Exp [Exp]
          | Int' Int
          | Boolean' Bool
          | Stream [Exp]
-         | VarDec Type String Exp
-         | VarAssign String Exp
-         | VarRef String
          | LE Exp Exp
          | GE Exp Exp
+         | LT' Exp Exp
+         | GT' Exp Exp
          | EQ' Exp Exp
          | NE Exp Exp
          | Cons Exp Exp
@@ -1892,9 +1892,10 @@ data Exp = While Exp [Exp]
          | Not Exp
          | Exponent Exp Exp
          | Modulo Exp Exp
-         | LT' Exp Exp
-         | GT' Exp Exp
          | Negate Exp
+         | VarDec Type String Exp
+         | VarAssign String Exp
+         | VarRef String
          deriving (Eq, Show)
 {-# LINE 1 "templates\GenericTemplate.hs" #-}
 {-# LINE 1 "templates\\\\GenericTemplate.hs" #-}

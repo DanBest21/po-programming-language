@@ -133,7 +133,8 @@ parseError ts = error errorMessage
     where lineCol = words (tokenPosn (last ts))
           errorMessage = "Parse error at line " ++ (lineCol !! 0) ++ ", column " ++ (lineCol !! 1)
 
-data Type = TypeInt 
+data Type = TypeNone
+          | TypeInt 
           | TypeBoolean 
           | TypeStream 
           deriving (Eq, Show)
