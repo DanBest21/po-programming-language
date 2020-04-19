@@ -15,45 +15,45 @@ import Lexer
 
 -- Token Directive
 %token
-    int_type    { TokenIntType _ }
-    stream_type { TokenStreamType _ }
-    boolean_type{ TokenBooleanType _ }
-    input       { TokenInput _ }
-    print       { TokenPrint _ }
-    while       { TokenWhile _ }
-    if          { TokenIf _ }
-    elif        { TokenElif _ }
-    else        { TokenElse _ }
-    has_next    { TokenHasNext _ }
-    next        { TokenNext _ }
-    size        { TokenSize _ }
-    int         { TokenInt _ $$ }
-    bool        { TokenBool _ $$ }
-    var         { TokenVar _ $$ }
-    '<='        { TokenLE _ }
-    '>='        { TokenGE _ }
-    '=='        { TokenEQ _ }
-    '!='        { TokenNE _ }
-    ':'         { TokenCons _ }
-    '++'        { TokenConcat _ }
-    '<-'        { TokenTake _ }
-    '='         { TokenAssign _ }
-    '+'         { TokenPlus _ }
-    '-'         { TokenMinus _ }
-    '*'         { TokenTimes _ }
-    '/'         { TokenDiv _ }
-    '('         { TokenLParen _ }
-    ')'         { TokenRParen _ }
-    '['         { TokenLSquare _ }
-    ']'         { TokenRSquare _ }
-    '{'         { TokenLCurly _ }
-    '}'         { TokenRCurly _ }
-    ','         { TokenComma _ }
-    '!'         { TokenNot _ }
-    '^'         { TokenExponent _ }
-    '%'         { TokenModulo _ }
-    '<'         { TokenLT _ }
-    '>'         { TokenGT _ }
+    int_type     { TokenIntType _ }
+    stream_type  { TokenStreamType _ }
+    boolean_type { TokenBooleanType _ }
+    input        { TokenInput _ }
+    print        { TokenPrint _ }
+    while        { TokenWhile _ }
+    if           { TokenIf _ }
+    elif         { TokenElif _ }
+    else         { TokenElse _ }
+    has_next     { TokenHasNext _ }
+    next         { TokenNext _ }
+    size         { TokenSize _ }
+    int          { TokenInt _ $$ }
+    bool         { TokenBool _ $$ }
+    var          { TokenVar _ $$ }
+    '<='         { TokenLE _ }
+    '>='         { TokenGE _ }
+    '=='         { TokenEQ _ }
+    '!='         { TokenNE _ }
+    ':'          { TokenCons _ }
+    '++'         { TokenConcat _ }
+    '<-'         { TokenTake _ }
+    '='          { TokenAssign _ }
+    '+'          { TokenPlus _ }
+    '-'          { TokenMinus _ }
+    '*'          { TokenTimes _ }
+    '/'          { TokenDiv _ }
+    '('          { TokenLParen _ }
+    ')'          { TokenRParen _ }
+    '['          { TokenLSquare _ }
+    ']'          { TokenRSquare _ }
+    '{'          { TokenLCurly _ }
+    '}'          { TokenRCurly _ }
+    ','          { TokenComma _ }
+    '!'          { TokenNot _ }
+    '^'          { TokenExponent _ }
+    '%'          { TokenModulo _ }
+    '<'          { TokenLT _ }
+    '>'          { TokenGT _ }
 
 -- Grammar
 %right '=' print
