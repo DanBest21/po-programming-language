@@ -18,7 +18,7 @@ $white+                         ;
 \;                              ;
 int                             { \p s -> TokenIntType p }
 stream                          { \p s -> TokenStreamType p }
-bool                            { \p s -> TokenBoolType p }
+boolean                         { \p s -> TokenBooleanType p }
 input                           { \p s -> TokenInput p }
 print                           { \p s -> TokenPrint p }
 while                           { \p s -> TokenWhile p }
@@ -62,7 +62,7 @@ $alpha [$alpha $digit \_]*      { \p s -> TokenVar p s }
 data Token =
     TokenIntType AlexPosn       |
     TokenStreamType AlexPosn    |
-    TokenBoolType AlexPosn      |
+    TokenBooleanType AlexPosn   |
     TokenInput AlexPosn         |
     TokenPrint AlexPosn         |
     TokenWhile AlexPosn         |
@@ -105,7 +105,7 @@ data Token =
 tokenPosn :: Token -> String
 tokenPosn (TokenIntType (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenStreamType (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
-tokenPosn (TokenBoolType (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
+tokenPosn (TokenBooleanType (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenInput (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenPrint (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenWhile (AlexPn _ x y)) = show(x) ++ " " ++ show(y)

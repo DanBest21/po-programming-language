@@ -5,7 +5,7 @@ type TypeEnvironment = [(String, Type)]
 
 -- Error function
 throwTypeError :: String -> Type -> Type -> a
-throwTypeError e expType actType = error ("Type error in " ++ (show e) ++ ":\nExpected type -\t" ++ (show expType) ++ "\nActual type -\t" ++ (show actType)) 
+throwTypeError e expType actType = error ("Type error in " ++ e ++ ":\nExpected type:\t" ++ (show expType) ++ "\nActual type:\t" ++ (show actType)) 
 
 getBinding :: String -> TypeEnvironment -> Type
 getBinding x [] = error "Variable binding not found"
@@ -31,17 +31,12 @@ typeOf tenv (Boolean' _) = TypeBoolean
 typeOf tenv (Stream _) = TypeStream
 
 -- While type checker
-typeOf tenv (While e es) | tWellTyped = typeOfExps' tenv es
+typeOf tenv (While e es) | tWellTyped = typeOfExps tenv es
                          | otherwise  = throwTypeError "while statement" t TypeBoolean
     where t          = typeOf tenv e
           tWellTyped = t == TypeBoolean
 
 -- Iterates through each expression to check it is the valid type
--- typeOfExps :: TypeEnvironment -> [Exp] -> Type
--- typeOfExps tenv es = do map (typeOf tenv) es
-                       -- return TypeNone
-
-typeOfExps' :: TypeEnvironment -> [Exp] -> Type
-typeOfExps' tenv [] = TypeNone
-typeOfExps' tenv (e : es) = typeOfExps' tenv es
-    where t = typeOf tenv e
+typeOfExps :: TypeEnvironment -> [Exp] -> Type
+typeOfExps tenv [] = TypeNone
+typeOfExps tenv (e : es) = seq (typeOf tenv e) (typeOfExps tenv es)

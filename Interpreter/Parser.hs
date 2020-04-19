@@ -27,7 +27,7 @@ happyExpList = Happy_Data_Array.listArray (0,485) ([63488,1011,8520,0,0,0,0,0,0,
 {-# NOINLINE happyExpListPerState #-}
 happyExpListPerState st =
     token_strs_expected
-  where token_strs = ["error","%dummy","%start_parse","Expr","Exps","Exp","If","Elif","Else","StreamLiteral","Type","int_type","stream_type","bool_type","input","print","while","if","elif","else","has_next","next","size","int","bool","var","'<='","'>='","'=='","'!='","':'","'++'","'<-'","'='","'+'","'-'","'*'","'/'","'('","')'","'['","']'","'{'","'}'","','","'!'","'^'","'%'","'<'","'>'","%eof"]
+  where token_strs = ["error","%dummy","%start_parse","Expr","Exps","Exp","If","Elif","Else","StreamLiteral","Type","int_type","stream_type","boolean_type","input","print","while","if","elif","else","has_next","next","size","int","bool","var","'<='","'>='","'=='","'!='","':'","'++'","'<-'","'='","'+'","'-'","'*'","'/'","'('","')'","'['","']'","'{'","'}'","','","'!'","'^'","'%'","'<'","'>'","%eof"]
         bit_start = st * 51
         bit_end = (st + 1) * 51
         read_bit = readArrayBit happyExpList
@@ -1782,7 +1782,7 @@ happyNewToken action sts stk (tk:tks) =
 	case tk of {
 	TokenIntType _ -> cont 12;
 	TokenStreamType _ -> cont 13;
-	TokenBoolType _ -> cont 14;
+	TokenBooleanType _ -> cont 14;
 	TokenInput _ -> cont 15;
 	TokenPrint _ -> cont 16;
 	TokenWhile _ -> cont 17;
@@ -1863,7 +1863,13 @@ data Type = TypeNone
           | TypeInt 
           | TypeBoolean 
           | TypeStream 
-          deriving (Eq, Show)
+          deriving (Eq)
+
+instance Show Type where
+     show (TypeNone) = "TypeNone" 
+     show (TypeInt) = "int"
+     show (TypeBoolean) = "boolean"
+     show (TypeStream) = "stream"
 
 data Exp = While Exp [Exp]
          | If [(Exp, [Exp])]

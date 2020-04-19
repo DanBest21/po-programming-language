@@ -17,7 +17,7 @@ import Lexer
 %token
     int_type    { TokenIntType _ }
     stream_type { TokenStreamType _ }
-    bool_type   { TokenBoolType _ }
+    boolean_type{ TokenBooleanType _ }
     input       { TokenInput _ }
     print       { TokenPrint _ }
     while       { TokenWhile _ }
@@ -123,7 +123,7 @@ StreamLiteral : {- empty -}              { [] }
               | Exp ',' StreamLiteral    { $1 : $3 }
 
 Type : int_type                          { TypeInt }
-     | bool_type                         { TypeBoolean }
+     | boolean_type                      { TypeBoolean }
      | stream_type                       { TypeStream }
 
 -- Post-amble
@@ -137,7 +137,13 @@ data Type = TypeNone
           | TypeInt 
           | TypeBoolean 
           | TypeStream 
-          deriving (Eq, Show)
+          deriving (Eq)
+
+instance Show Type where
+     show (TypeNone) = "TypeNone" 
+     show (TypeInt) = "int"
+     show (TypeBoolean) = "boolean"
+     show (TypeStream) = "stream"
 
 data Exp = While Exp [Exp]
          | If [(Exp, [Exp])]
