@@ -10,7 +10,6 @@ main = catch main' noParse
 
 main' = do (fileName : _ ) <- getArgs 
            sourceCode <- readFile fileName
-           putStrLn ("Compiling " ++ (show fileName) ++ "...")
            contents <- getContents
            let input = streams_convert $ streams_split contents
            let output = evaluate (parse $ alexScanTokens $ sourceCode) input
