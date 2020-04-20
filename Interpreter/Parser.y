@@ -144,8 +144,9 @@ Type : int_type                          { TypeInt }
 -- Post-amble
 {
 parseError :: [Token] -> a
-parseError ts = error errorMessage
-    where lineCol = words (tokenPosn (last ts))
+parseError [] = error "Unknown error in parsing"
+parseError (t : ts) = error errorMessage
+    where lineCol = words (tokenPosn t)
           errorMessage = "Parse error at line " ++ (lineCol !! 0) ++ ", column " ++ (lineCol !! 1)
 
 data Type = TypeNone
