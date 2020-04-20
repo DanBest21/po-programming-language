@@ -15,6 +15,7 @@ import Lexer
 
 -- Token Directive
 %token
+    sep          { TokenSeparatorType _ }
     int_type     { TokenIntType _ }
     stream_type  { TokenStreamType _ }
     boolean_type { TokenBooleanType _ }
@@ -75,7 +76,8 @@ Expr : {- empty -}                       { [] }
      | Exps                              { $1 }
 
 Exps : Exp                               { [$1] }
-     | Exp Exps                          { $1 : $2 }
+     | Exp sep                           { [$1] }
+     | Exp sep Exps                      { $1 : $3 }
 
 Exp : while Exp '{' Expr '}'             { While $2 $4 }
     | If                                 { $1 }

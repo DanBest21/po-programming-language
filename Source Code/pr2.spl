@@ -1,12 +1,11 @@
-while (has_next input{3})
-{
-    int c = next input{3}
-    int b = next input{2}
-    int a = next input{1}
+while (has_next input{3}) {
+    int c = next input{3};
+    int b = next input{2};
+    int a = next input{1};
 
-    print c
-    print b
-    print a
-    print (a + b)
-    print (b + c)
+    print c;
+    print b;
+    print a;
+    print (a + b);
+    print (b + c);
 }
