@@ -70,8 +70,9 @@ evalStep ((Boolean' b) : es, env, (HWhile e es') : k, out) | b         = (es' ++
 
 -- If/Elif/Else statement
 evalStep ((If ((e, es) : elifs)) : es', env, k, out) = (e : es', env, (HIf es elifs) : k, out)
-evalStep ((Boolean' b) : es', env, (HIf es elifs) : k, out) | b         = (es ++ es', env, k, out)
-                                                            | otherwise = ((If elifs) : es', env, k, out)                                                       
+evalStep ((Boolean' b) : es', env, (HIf es elifs) : k, out) | b          = (es ++ es', env, k, out)
+                                                            | null elifs = (es', env, k, out)
+                                                            | otherwise  = ((If elifs) : es', env, k, out)                                                       
 
 -- Print statement
 evalStep ((Print e) : es, env, k, out) = (e : es, env, (PrintH) : k, out)

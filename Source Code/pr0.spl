@@ -7,7 +7,7 @@ if (x == 5)
 
 y = y + 1
 
-if (y == 6)
+if (y)
 {
     print x
 }
