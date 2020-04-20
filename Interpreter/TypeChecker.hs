@@ -33,7 +33,7 @@ typeOf tenv (Stream (e : es)) | tWellTyped = typeOf tenv (Stream es)
             tWellTyped = t == TypeInt
 
 -- While type checker
-typeOf tenv (While e es) | tWellTyped = (typeOfExps tenv' es, tenv')
+typeOf tenv (While e es) | tWellTyped = typeOfExps tenv' es
                          | otherwise  = throwTypeError "while statement" TypeBoolean t
       where (t, tenv') = typeOf tenv e
             tWellTyped = t == TypeBoolean
@@ -41,10 +41,10 @@ typeOf tenv (While e es) | tWellTyped = (typeOfExps tenv' es, tenv')
 -- If/Elif/Else type checker
 -- Empty expression list can only be generated from a recursive typeOf call.
 typeOf tenv (If []) = (TypeNone, tenv)
-typeOf tenv (If ((e, es) : elifs)) | tWellTyped = typeOf tenv' (If elifs)
+typeOf tenv (If ((e, es) : elifs)) | tWellTyped = typeOf (nub (tenv1 ++ tenv2)) (If elifs)
                                    | otherwise  = throwTypeError "if statement" TypeBoolean t1
-      where (t1, tenv') = typeOf tenv e
-            t2          = typeOfExps tenv' es
+      where (t1, tenv1) = typeOf tenv e
+            (t2, tenv2) = typeOfExps tenv1 es
             tWellTyped  = (t1 == TypeBoolean) && (t2 == TypeNone)
 
 -- Print type checker
@@ -209,7 +209,7 @@ typeOf tenv (VarAssign x e) | tWellTyped = (TypeNone, updateVariableType x t1 te
 typeOf tenv (VarRef x) = (getVariableType x tenv, tenv)
 
 -- Iterates through each expression to check it is the valid type
-typeOfExps :: TypeEnvironment -> [Exp] -> Type
-typeOfExps tenv [] = TypeNone
+typeOfExps :: TypeEnvironment -> [Exp] -> (Type, TypeEnvironment)
+typeOfExps tenv [] = (TypeNone, tenv)
 typeOfExps tenv (e : es) = seq t (typeOfExps tenv' es)
       where (t, tenv') = typeOf tenv e
