@@ -19,7 +19,7 @@ main' = do (fileName : _ ) <- getArgs
 
 noParse :: ErrorCall -> IO ()
 noParse e = do let err = show e
-               hPutStr stderr err
+               hPutStrLn stderr err
                return ()
 
 streams_split :: String -> [[Int]] -- List of streams

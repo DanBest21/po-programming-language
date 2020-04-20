@@ -214,13 +214,13 @@ typeOf tenv (Negate e) | tWellTyped = (TypeInt, tenv')
             tWellTyped = t == TypeInt
 
 -- Variable declaration type checker
-typeOf tenv (VarDec t1 x e) | tWellTyped = (TypeNone, updateVariableType x t1 tenv')
+typeOf tenv (VarDec t1 x e) | tWellTyped = (t1, updateVariableType x t1 tenv')
                             | otherwise  = throwTypeError ("declaration of variable '" ++ x ++ "'") t1 t2
       where (t2, tenv') = typeOf tenv e
             tWellTyped  = t1 == t2
 
 -- Variable assignment type checker
-typeOf tenv (VarAssign x e) | tWellTyped = (TypeNone, updateVariableType x t1 tenv')
+typeOf tenv (VarAssign x e) | tWellTyped = (t1, updateVariableType x t1 tenv')
                             | otherwise  = throwTypeError ("assignment of variable '" ++ x ++ "'") t1 t2
       where (t1, (t2, tenv')) = (getVariableType x tenv, typeOf tenv e)
             tWellTyped        = t1 == t2

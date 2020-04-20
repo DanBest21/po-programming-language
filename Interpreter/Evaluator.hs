@@ -130,9 +130,9 @@ evalStep (e1 : es, env, (HEqual e2) : k, out) | isValue e1 = (e2 : es, env, (Equ
 evalStep (e2 : es, env, (EqualH e1) : k, out) | isValue e2 = ((Boolean' (e1 == e2)) : es, env, k, out)
 
 -- Not equals statement
-evalStep ((NE e1 e2) : es, env, k, out) = (e1 : es, env, (HEqual e2) : k, out)
-evalStep (e1 : es, env, (HEqual e2) : k, out) | isValue e1 = (e2 : es, env, (EqualH e1) : k, out)
-evalStep (e2 : es, env, (EqualH e1) : k, out) | isValue e2 = ((Boolean' (e1 /= e2)) : es, env, k, out)
+evalStep ((NE e1 e2) : es, env, k, out) = (e1 : es, env, (HNotEqual e2) : k, out)
+evalStep (e1 : es, env, (HNotEqual e2) : k, out) | isValue e1 = (e2 : es, env, (NotEqualH e1) : k, out)
+evalStep (e2 : es, env, (NotEqualH e1) : k, out) | isValue e2 = ((Boolean' (e1 /= e2)) : es, env, k, out)
 
 -- Cons statement
 evalStep ((Cons e1 e2) : es, env, k, out) = (e1 : es, env, (HCons e2) : k, out)
@@ -200,11 +200,11 @@ evalStep ((Int' x) : es, env, (NegateH) : k, out) = ((Int' (negate x)) : es, env
 
 -- Variable declaration statement
 evalStep ((VarDec t x e) : es, env, k, out) = (e : es, env, (VarDecH x) : k, out)
-evalStep (e : es, env, (VarDecH x) : k, out) | isValue e = (es, updateVariable env x e, k, out)
+evalStep (e : es, env, (VarDecH x) : k, out) | isValue e = (e : es, updateVariable env x e, k, out)
 
 -- Variable assignment statement
 evalStep ((VarAssign x e) : es, env, k, out) = (e : es, env, (VarAssignH x) : k, out)
-evalStep (e : es, env, (VarAssignH x) : k, out) | isValue e = (es, updateVariable env x e, k, out)
+evalStep (e : es, env, (VarAssignH x) : k, out) | isValue e = (e : es, updateVariable env x e, k, out)
 
 -- Variable reference statement
 evalStep ((VarRef x) : es, env, k, out) = ((getVariable x env) : es, env, k, out)

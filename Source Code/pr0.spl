@@ -1,7 +1,4 @@
-int x = 10
-boolean y = x == 10
-
-if (x == 10 and y)
+if ((int x = 10) == 10)
 {
     print 10
 }
