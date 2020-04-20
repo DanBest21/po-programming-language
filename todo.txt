@@ -3,6 +3,6 @@
 3. process
 4. try to get more accurate parsing error messages
 5. += -= etc.
-5.5. fix stream on one line and stream on the next failing as it thinks it should be parsing the latter as a streamget
+5.5. fix stream on one line and stream on the next failing as it thinks it should be parsing the latter as a streamget -- FIXED BY ADDING semicolons, maybe work on removing again.
 -- CONSIDER BEFORE DOING THIS
 6. better type error messages (line and col number for AlexPosn; show error line from source code)
