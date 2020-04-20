@@ -15,7 +15,7 @@ tokens :-
 
 $white+                         ;
 "//".*                          ;
-\;                              { \p s -> TokenSeparatorType p }
+\;                              ;
 int                             { \p s -> TokenIntType p }
 stream                          { \p s -> TokenStreamType p }
 boolean                         { \p s -> TokenBooleanType p }
@@ -60,7 +60,6 @@ $alpha [$alpha $digit \_]*      { \p s -> TokenVar p s }
 -- Post-amble
 {
 data Token =
-    TokenSeparatorType AlexPosn |
     TokenIntType AlexPosn       |
     TokenStreamType AlexPosn    |
     TokenBooleanType AlexPosn   |
@@ -104,7 +103,6 @@ data Token =
     deriving (Eq,Show)
 
 tokenPosn :: Token -> String
-tokenPosn (TokenSeparatorType (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenIntType (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenStreamType (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenBooleanType (AlexPn _ x y)) = show(x) ++ " " ++ show(y)

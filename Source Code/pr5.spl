@@ -1,7 +1,7 @@
-int acc = 0;
+int acc = 0
 
 while (has_next input{1})
 {
-    acc = acc + next input{1};
-    print acc;
+    acc = acc + next input{1}
+    print acc
 }

@@ -1,1 +1,12 @@
 Interpreter/Lexer.hs
+Interpreter/Evaluator.hi
+Interpreter/Evaluator.o
+Interpreter/Lexer.hi
+Interpreter/Lexer.o
+Interpreter/Parser.hi
+Interpreter/Parser.o
+Interpreter/Po.exe
+Interpreter/Po.hi
+Interpreter/Po.o
+Interpreter/TypeChecker.hi
+Interpreter/TypeChecker.o

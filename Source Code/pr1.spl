@@ -1,6 +1,6 @@
 while (size input{1} > 1)
 {
-    print (next input{1});
-    print (next input{1});
-    print (next input{2});
+    print (next input{1})
+    print (next input{1})
+    print (next input{2})
 }
