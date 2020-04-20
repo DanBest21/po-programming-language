@@ -1,4 +1,3 @@
-Interpreter/Lexer.hs
 Interpreter/Evaluator.hi
 Interpreter/Evaluator.o
 Interpreter/Lexer.hi
