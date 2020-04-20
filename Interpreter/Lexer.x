@@ -21,6 +21,8 @@ stream                          { \p s -> TokenStreamType p }
 boolean                         { \p s -> TokenBooleanType p }
 input                           { \p s -> TokenInput p }
 print                           { \p s -> TokenPrint p }
+fn                              { \p s -> TokenFunction p }
+return                          { \p s -> TokenReturn p }
 while                           { \p s -> TokenWhile p }
 if                              { \p s -> TokenIf p }
 elif                            { \p s -> TokenElif p }
@@ -41,6 +43,7 @@ $alpha [$alpha $digit \_]*      { \p s -> TokenVar p s }
 \:                              { \p s -> TokenCons p }
 \+\+                            { \p s -> TokenConcat p }
 \<\-                            { \p s -> TokenTake p }
+\-\>                            { \p s -> TokenReturnArrow p }
 \=                              { \p s -> TokenAssign p }
 \+\=                            { \p s -> TokenPlusEquals p }
 \-\=                            { \p s -> TokenMinusEquals p }
@@ -73,6 +76,8 @@ data Token =
     TokenBooleanType AlexPosn    |
     TokenInput AlexPosn          |
     TokenPrint AlexPosn          |
+    TokenFunction AlexPosn       |
+    TokenReturn AlexPosn         |
     TokenWhile AlexPosn          |
     TokenIf AlexPosn             |
     TokenElif AlexPosn           |
@@ -86,6 +91,14 @@ data Token =
     TokenBool AlexPosn Bool      |
     TokenStream AlexPosn String  |
     TokenVar AlexPosn String     |
+    TokenLE AlexPosn             |
+    TokenGE AlexPosn             |
+    TokenEQ AlexPosn             |
+    TokenNE AlexPosn             |
+    TokenCons AlexPosn           |
+    TokenConcat AlexPosn         |
+    TokenTake AlexPosn           |
+    TokenReturnArrow AlexPosn    |
     TokenAssign AlexPosn         |
     TokenPlusEquals AlexPosn     |
     TokenMinusEquals AlexPosn    |
@@ -108,14 +121,7 @@ data Token =
     TokenExponent AlexPosn       |
     TokenModulo AlexPosn         |
     TokenLT AlexPosn             |
-    TokenGT AlexPosn             |
-    TokenLE AlexPosn             |
-    TokenGE AlexPosn             |
-    TokenEQ AlexPosn             |
-    TokenNE AlexPosn             |
-    TokenCons AlexPosn           |
-    TokenConcat AlexPosn         |
-    TokenTake AlexPosn
+    TokenGT AlexPosn
     deriving (Eq,Show)
 
 tokenPosn :: Token -> String
@@ -124,6 +130,8 @@ tokenPosn (TokenStreamType (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenBooleanType (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenInput (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenPrint (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
+tokenPosn (TokenFunction (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
+tokenPosn (TokenReturn (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenWhile (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenIf (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenElif (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
@@ -137,6 +145,14 @@ tokenPosn (TokenInt (AlexPn _ x y) _) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenBool (AlexPn _ x y) _) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenStream (AlexPn _ x y) _) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenVar (AlexPn _ x y) _) = show(x) ++ " " ++ show(y)
+tokenPosn (TokenLE (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
+tokenPosn (TokenGE (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
+tokenPosn (TokenEQ (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
+tokenPosn (TokenNE (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
+tokenPosn (TokenCons (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
+tokenPosn (TokenConcat (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
+tokenPosn (TokenTake (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
+tokenPosn (TokenReturnArrow (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenAssign (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenPlusEquals (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenMinusEquals (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
@@ -160,11 +176,4 @@ tokenPosn (TokenExponent (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenModulo (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenLT (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenGT (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
-tokenPosn (TokenLE (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
-tokenPosn (TokenGE (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
-tokenPosn (TokenEQ (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
-tokenPosn (TokenNE (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
-tokenPosn (TokenCons (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
-tokenPosn (TokenConcat (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
-tokenPosn (TokenTake (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 }

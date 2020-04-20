@@ -20,6 +20,8 @@ import Lexer
     boolean_type { TokenBooleanType _ }
     input        { TokenInput _ }
     print        { TokenPrint _ }
+    fn           { TokenFunction _ }
+    return       { TokenReturn _ }
     while        { TokenWhile _ }
     if           { TokenIf _ }
     elif         { TokenElif _ }
@@ -39,6 +41,7 @@ import Lexer
     ':'          { TokenCons _ }
     '++'         { TokenConcat _ }
     '<-'         { TokenTake _ }
+    '->'         { TokenReturnArrow _ }
     '='          { TokenAssign _ }
     '+='         { TokenPlusEquals _ }
     '-='         { TokenMinusEquals _ }
@@ -117,6 +120,9 @@ Exp : while Exp '{' Expr '}'             { While $2 $4 }
     | Exp '[' Exp ']'                    { StreamGet $1 $3 }
     | input '{' Exp '}'                  { InputGet $3 }
     | print Exp                          { Print $2 }
+    | FnDec                              { $1 }
+    | var '(' ArgList ')'                { FnCall $1 $3 }
+    | return Exp                         { FnReturn $2 }
     | '!' Exp                            { Not $2 }
     | Exp '^' Exp                        { Exponent $1 $3 }
     | Exp '%' Exp                        { Modulo $1 $3 }
@@ -141,6 +147,17 @@ Type : int_type                          { TypeInt }
      | boolean_type                      { TypeBoolean }
      | stream_type                       { TypeStream }
 
+FnDec : fn var '(' ParamList ')' '{' Expr '}'           { FnDec $2 $4 TypeNone $7 }
+      | fn var '(' ParamList ')' '->' Type '{' Expr '}' { FnDec $2 $4 $7 $9 }
+
+ParamList : {- empty -}                  { [] }
+          | Type var                     { [($1, $2)] }
+          | Type var ',' ParamList       { ($1, $2) : $4 }
+
+ArgList : {- empty -}                    { [] }
+        | var                            { [$1] }
+        | var ',' ArgList                { $1 : $3 }
+
 -- Post-amble
 {
 parseError :: [Token] -> a
@@ -164,6 +181,9 @@ instance Show Type where
 data Exp = While Exp [Exp]
          | If [(Exp, [Exp])]
          | Print Exp
+         | FnDec String [(Type, Exp)] Type [Exp]
+         | FnCall String [Exp]
+         | FnReturn Exp
          | HasNext Exp
          | Next Exp
          | Size Exp

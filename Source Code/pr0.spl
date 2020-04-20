@@ -1,4 +1,10 @@
+fn f1 (int x, stream y, boolean z) -> int
+{
+
+}
+
 if ((int x = 10) == 10)
 {
     print 10
+    print f1()
 }
