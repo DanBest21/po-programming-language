@@ -1,6 +1,7 @@
 import Lexer
 import Parser
 import Evaluator
+import TypeChecker
 import System.Environment
 import Control.Exception hiding (evaluate)
 import System.IO
@@ -12,7 +13,8 @@ main' = do (fileName : _ ) <- getArgs
            sourceCode <- readFile fileName
            contents <- getContents
            let input = streams_convert $ streams_split contents
-           let output = evaluate (parse $ alexScanTokens $ sourceCode) input
+           let ast = parse $ alexScanTokens $ sourceCode
+           let output = seq (typeOfExps [] ast) (evaluate ast input)
            mapM_ (putStrLn . show) output
 
 noParse :: ErrorCall -> IO ()
