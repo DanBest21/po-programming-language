@@ -162,16 +162,22 @@ typeOf tenv (Div e1 e2) | tWellTyped1 && tWellTyped2 = (TypeInt, nub (tenv1 ++ t
 
 -- Stream get (by index) type checker
 typeOf tenv (StreamGet e1 e2) | tWellTyped1 && tWellTyped2 = (TypeInt, nub (tenv1 ++ tenv2))
-                              | not tWellTyped1            = throwTypeError "stream get expression" TypeInt t1
-                              | not tWellTyped2            = throwTypeError "index of stream get expression" TypeInt t2
+                              | not tWellTyped1            = throwTypeError "stream access" TypeStream t1
+                              | not tWellTyped2            = throwTypeError "stream index" TypeInt t2
       where ((t1, tenv1), (t2, tenv2)) = (typeOf tenv e1, typeOf tenv e2)
             (tWellTyped1, tWellTyped2) = (t1 == TypeStream, t2 == TypeInt)
 
 -- Input get (by index) type checker
 typeOf tenv (InputGet e) | tWellTyped = (TypeStream, tenv')
-                         | otherwise  = throwTypeError "index of input get expression" TypeInt t
+                         | otherwise  = throwTypeError "input index" TypeInt t
       where (t, tenv') = typeOf tenv e
             tWellTyped = t == TypeInt
+
+-- Not type checker
+typeOf tenv (Not e) | tWellTyped = (TypeBoolean, tenv')
+                    | otherwise  = throwTypeError "'!' expression" TypeBoolean t
+      where (t, tenv') = typeOf tenv e
+            tWellTyped = t == TypeBoolean
 
 -- Exponent type checker
 typeOf tenv (Exponent e1 e2) | tWellTyped1 && tWellTyped2 = (TypeInt, nub (tenv1 ++ tenv2))
@@ -188,7 +194,7 @@ typeOf tenv (Modulo e1 e2) | tWellTyped1 && tWellTyped2 = (TypeInt, nub (tenv1 +
             (tWellTyped1, tWellTyped2) = (t1 == TypeInt, t2 == TypeInt)
 
 -- Negate type checker
-typeOf tenv (Negate e) | tWellTyped = (TypeNone, tenv')
+typeOf tenv (Negate e) | tWellTyped = (TypeInt, tenv')
                        | otherwise  = throwTypeError "negate expression" TypeInt t
       where (t, tenv') = typeOf tenv e
             tWellTyped = t == TypeInt

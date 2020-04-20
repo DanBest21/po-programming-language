@@ -1,13 +1,6 @@
-int x = 5
+stream x = [1,2,3,4]
+int y = 1
 
-if (x == 5)
-{
-    int y = 6
-}
+x[1]
 
-y = y + 1
-
-if (y)
-{
-    print x
-}
+print input{[1,23,4]}[2]
