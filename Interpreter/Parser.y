@@ -67,7 +67,7 @@ import Lexer
     '>'          { TokenGT _ }
 
 -- Grammar
-%right '=' '+=' '-=' '*=' '/=' '^=' '%=' print
+%right '=' '+=' '-=' '*=' '/=' '^=' '%=' print return
 %left or
 %left and 
 %left '==' '!='
@@ -147,16 +147,16 @@ Type : int_type                          { TypeInt }
      | boolean_type                      { TypeBoolean }
      | stream_type                       { TypeStream }
 
-FnDec : fn var '(' ParamList ')' '{' Expr '}'           { FnDec $2 $4 TypeNone $7 }
-      | fn var '(' ParamList ')' '->' Type '{' Expr '}' { FnDec $2 $4 $7 $9 }
+FnDec : fn var '(' ParamList ')' '{' Expr '}'           { FnDec $2 $4 TypeNone ($7 ++ (FnEnd $2)) }
+      | fn var '(' ParamList ')' '->' Type '{' Expr '}' { FnDec $2 $4 $7 ($9 ++ (FnEnd $2)) }
 
 ParamList : {- empty -}                  { [] }
           | Type var                     { [($1, $2)] }
           | Type var ',' ParamList       { ($1, $2) : $4 }
 
 ArgList : {- empty -}                    { [] }
-        | var                            { [$1] }
-        | var ',' ArgList                { $1 : $3 }
+        | Exp                            { [$1] }
+        | Exp ',' ArgList                { $1 : $3 }
 
 -- Post-amble
 {
@@ -181,9 +181,10 @@ instance Show Type where
 data Exp = While Exp [Exp]
          | If [(Exp, [Exp])]
          | Print Exp
-         | FnDec String [(Type, Exp)] Type [Exp]
+         | FnDec String [(Type, String)] Type [Exp]
          | FnCall String [Exp]
-         | FnReturn Exp
+         | FnReturn String Exp
+         | FnEnd String
          | HasNext Exp
          | Next Exp
          | Size Exp

@@ -6,6 +6,8 @@ type Environment = [(String, Exp)]
 data Frame = HWhile Exp [Exp]
            | HIf [Exp] [(Exp, [Exp])]
            | PrintH
+           | FnCallH String Environment
+           | FnReturnH String
            | HasNextH
            | NextH
            | SizeH
@@ -41,14 +43,14 @@ type Output = [Int]
 type State = ([Exp], Environment, Kontinuation, Output)
 
 -- Retrieve the value that is bound to the given variable identifier.
-getVariable :: String -> Environment -> Exp
-getVariable x [] = error ("Unrecognised variable " ++ x)
-getVariable x ((y, exp) : env) | x == y    = exp
-                               | otherwise = getVariable x env
+getBinding :: String -> Environment -> Exp
+getBinding x [] = error ("Unrecognised variable " ++ x)
+getBinding x ((y, exp) : env) | x == y    = exp
+                               | otherwise = getBinding x env
 
 -- Updates an existing environment in the passed environment
-updateVariable :: Environment -> String -> Exp -> Environment
-updateVariable env x exp = filter ((/= x) . fst) env ++ [(x, exp)] 
+updateBinding :: Environment -> String -> Exp -> Environment
+updateBinding env x exp = filter ((/= x) . fst) env ++ [(x, exp)] 
 
 -- Checks for terminated expressions.
 isValue :: Exp -> Bool
@@ -57,6 +59,10 @@ isValue (Boolean' _) = True
 isValue (Stream []) = True
 isValue (Stream (e : es)) = (isValue e) && (isValue (Stream es))
 isValue _ = False
+
+getFunctionEnvironment :: String -> [Exp] -> Environment -> (Environment, [Exp])
+getFunctionEnvironment x args env = (zip (map snd params) (args), es)
+      where (FnDec y params t es) = getBinding x env
 
 setupEnvironment :: [Exp] -> Int -> [(String, Exp)]
 setupEnvironment [] _ = []
@@ -80,6 +86,20 @@ evalStep ((Boolean' b) : es', env, (HIf es elifs) : k, out) | b          = (es +
 evalStep ((Print e) : es, env, k, out) = (e : es, env, (PrintH) : k, out)
 evalStep ((Int' x) : es, env, (PrintH) : k, out) = (es, env, k, out ++ [x])
 
+-- Function declaration statement
+evalStep (e@(FnDec x params t es) : es', env, k, out) = (es', updateBinding env x e, k, out)
+
+-- Function call statement
+evalStep ((FnCall x args) : es, env, k, out) = (es' ++ es, env', (FnCallH x env) : k, out)
+      where (env', es') = getFunctionEnvironment x args env
+evalStep ((FnEnd x) : es, env, (FnCallH y env') : k, out) | x == y    = (es, env', k, out)
+                                                          | otherwise = (es, env, (FnCallH y env') : k, out)
+
+-- Function return statement
+evalStep ((FnReturn x e) : es, env, k, out) = (e : es, env, (FnReturnH x) : k, out)
+evalStep ((FnEnd x) : es, env, (FnReturnH y env') : k, out) = ()
+evalStep (e : es, )
+
 -- Has Next statement
 evalStep ((HasNext e) : es, env, k, out) = (e : es, env, (HasNextH) : k, out)
 evalStep ((Stream es) : es', env, (HasNextH) : k, out) = ((Boolean' (not(null es))) : es', env, k, out)
@@ -87,8 +107,8 @@ evalStep ((Stream es) : es', env, (HasNextH) : k, out) = ((Boolean' (not(null es
 -- Next statement
 evalStep ((Next e) : es, env, k, out) = (e : es, env, (NextH) : k, out)
 evalStep ((Stream (e : es)) : es', env, (NextH) : k, out) = (e : es', env, k, out)
-evalStep ((VarRef x) : es, env, (NextH) : k, out) = (e : es, updateVariable env x (Stream es'), k, out)
-      where (Stream (e : es')) = getVariable x env
+evalStep ((VarRef x) : es, env, (NextH) : k, out) = (e : es, updateBinding env x (Stream es'), k, out)
+      where (Stream (e : es')) = getBinding x env
 
 -- Size statement
 evalStep ((Size e) : es, env, k, out) = (e : es, env, (SizeH) : k, out)
@@ -148,8 +168,8 @@ evalStep ((Stream e2) : es, env, (ConcatH (Stream e1)) : k, out) = ((Stream (e1 
 evalStep ((Take e1 e2) : es, env, k, out) = (e1 : es, env, (HTake e2) : k, out)
 evalStep ((Int' x) : es, env, (HTake e2) : k, out) = (e2 : es, env, (TakeH (Int' x)) : k, out)
 evalStep ((Stream e2) : es, env, (TakeH (Int' x)) : k, out) = ((Stream (take x e2)) : es, env, k, out)
-evalStep ((VarRef y) : es, env, (TakeH (Int' x)) : k, out) = ((Stream (take x e2)) : es, updateVariable env y (Stream (drop x e2)), k, out)
-      where (Stream e2) = getVariable y env 
+evalStep ((VarRef y) : es, env, (TakeH (Int' x)) : k, out) = ((Stream (take x e2)) : es, updateBinding env y (Stream (drop x e2)), k, out)
+      where (Stream e2) = getBinding y env 
 
 -- Add/Plus statement
 evalStep ((Plus e1 e2) : es, env, k, out) = (e1 : es, env, (HPlus e2) : k, out)
@@ -200,14 +220,14 @@ evalStep ((Int' x) : es, env, (NegateH) : k, out) = ((Int' (negate x)) : es, env
 
 -- Variable declaration statement
 evalStep ((VarDec t x e) : es, env, k, out) = (e : es, env, (VarDecH x) : k, out)
-evalStep (e : es, env, (VarDecH x) : k, out) | isValue e = (e : es, updateVariable env x e, k, out)
+evalStep (e : es, env, (VarDecH x) : k, out) | isValue e = (e : es, updateBinding env x e, k, out)
 
 -- Variable assignment statement
 evalStep ((VarAssign x e) : es, env, k, out) = (e : es, env, (VarAssignH x) : k, out)
-evalStep (e : es, env, (VarAssignH x) : k, out) | isValue e = (e : es, updateVariable env x e, k, out)
+evalStep (e : es, env, (VarAssignH x) : k, out) | isValue e = (e : es, updateBinding env x e, k, out)
 
 -- Variable reference statement
-evalStep ((VarRef x) : es, env, k, out) = ((getVariable x env) : es, env, k, out)
+evalStep ((VarRef x) : es, env, k, out) = ((getBinding x env) : es, env, k, out)
 
 -- Catch idempotent statements.
 evalStep (e : es, env, [], out) | isValue e = (es, env, [], out)

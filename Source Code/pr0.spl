@@ -1,10 +1,13 @@
-fn f1 (int x, stream y, boolean z) -> int
+fn max(int x, int y) -> int
 {
-
+    if (x < y)
+    {
+        return y
+    }
+    else
+    {
+        return x
+    }
 }
 
-if ((int x = 10) == 10)
-{
-    print 10
-    print f1()
-}
+print (max(5, 10))
