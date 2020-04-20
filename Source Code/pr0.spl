@@ -1,6 +1,7 @@
-stream x = [1,2,3,4]
-int y = 1
+int x = 10
+boolean y = x == 10
 
-x[1]
-
-print input{[1,23,4]}[2]
+if (x == 10 and y)
+{
+    print 10
+}

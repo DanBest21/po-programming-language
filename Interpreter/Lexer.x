@@ -28,6 +28,8 @@ else                            { \p s -> TokenElse p }
 has_next                        { \p s -> TokenHasNext p }
 next                            { \p s -> TokenNext p }
 size                            { \p s -> TokenSize p }
+and                             { \p s -> TokenAnd p }
+or                              { \p s -> TokenOr p }
 $digit+                         { \p s -> TokenInt p (read s) }
 true                            { \p s -> TokenBool p True }
 false                           { \p s -> TokenBool p False }
@@ -40,6 +42,12 @@ $alpha [$alpha $digit \_]*      { \p s -> TokenVar p s }
 \+\+                            { \p s -> TokenConcat p }
 \<\-                            { \p s -> TokenTake p }
 \=                              { \p s -> TokenAssign p }
+\+\=                            { \p s -> TokenPlusEquals p }
+\-\=                            { \p s -> TokenMinusEquals p }
+\*\=                            { \p s -> TokenTimesEquals p }
+\/\=                            { \p s -> TokenDivEquals p }
+\^\=                            { \p s -> TokenExponentEquals p }
+\%\=                            { \p s -> TokenModuloEquals p }
 \+                              { \p s -> TokenPlus p }
 \-                              { \p s -> TokenMinus p }
 \*                              { \p s -> TokenTimes p }
@@ -60,45 +68,53 @@ $alpha [$alpha $digit \_]*      { \p s -> TokenVar p s }
 -- Post-amble
 {
 data Token =
-    TokenIntType AlexPosn       |
-    TokenStreamType AlexPosn    |
-    TokenBooleanType AlexPosn   |
-    TokenInput AlexPosn         |
-    TokenPrint AlexPosn         |
-    TokenWhile AlexPosn         |
-    TokenIf AlexPosn            |
-    TokenElif AlexPosn          |
-    TokenElse AlexPosn          |
-    TokenHasNext AlexPosn       |
-    TokenNext AlexPosn          |
-    TokenSize AlexPosn          |
-    TokenInt AlexPosn Int       |
-    TokenBool AlexPosn Bool     |
-    TokenStream AlexPosn String |
-    TokenVar AlexPosn String    |
-    TokenAssign AlexPosn        |
-    TokenPlus AlexPosn          |
-    TokenMinus AlexPosn         |
-    TokenTimes AlexPosn         |
-    TokenDiv AlexPosn           |
-    TokenLParen AlexPosn        |
-    TokenRParen AlexPosn        |
-    TokenLSquare AlexPosn       |
-    TokenRSquare AlexPosn       |
-    TokenLCurly AlexPosn        |
-    TokenRCurly AlexPosn        |
-    TokenComma AlexPosn         |
-    TokenNot AlexPosn           |
-    TokenExponent AlexPosn      |
-    TokenModulo AlexPosn        |
-    TokenLT AlexPosn            |
-    TokenGT AlexPosn            |
-    TokenLE AlexPosn            |
-    TokenGE AlexPosn            |
-    TokenEQ AlexPosn            |
-    TokenNE AlexPosn            |
-    TokenCons AlexPosn          |
-    TokenConcat AlexPosn        |
+    TokenIntType AlexPosn        |
+    TokenStreamType AlexPosn     |
+    TokenBooleanType AlexPosn    |
+    TokenInput AlexPosn          |
+    TokenPrint AlexPosn          |
+    TokenWhile AlexPosn          |
+    TokenIf AlexPosn             |
+    TokenElif AlexPosn           |
+    TokenElse AlexPosn           |
+    TokenHasNext AlexPosn        |
+    TokenNext AlexPosn           |
+    TokenSize AlexPosn           |
+    TokenAnd AlexPosn            |
+    TokenOr AlexPosn             |
+    TokenInt AlexPosn Int        |
+    TokenBool AlexPosn Bool      |
+    TokenStream AlexPosn String  |
+    TokenVar AlexPosn String     |
+    TokenAssign AlexPosn         |
+    TokenPlusEquals AlexPosn     |
+    TokenMinusEquals AlexPosn    |
+    TokenTimesEquals AlexPosn    |
+    TokenDivEquals AlexPosn      |
+    TokenExponentEquals AlexPosn |
+    TokenModuloEquals AlexPosn   |
+    TokenPlus AlexPosn           |
+    TokenMinus AlexPosn          |
+    TokenTimes AlexPosn          |
+    TokenDiv AlexPosn            |
+    TokenLParen AlexPosn         |
+    TokenRParen AlexPosn         |
+    TokenLSquare AlexPosn        |
+    TokenRSquare AlexPosn        |
+    TokenLCurly AlexPosn         |
+    TokenRCurly AlexPosn         |
+    TokenComma AlexPosn          |
+    TokenNot AlexPosn            |
+    TokenExponent AlexPosn       |
+    TokenModulo AlexPosn         |
+    TokenLT AlexPosn             |
+    TokenGT AlexPosn             |
+    TokenLE AlexPosn             |
+    TokenGE AlexPosn             |
+    TokenEQ AlexPosn             |
+    TokenNE AlexPosn             |
+    TokenCons AlexPosn           |
+    TokenConcat AlexPosn         |
     TokenTake AlexPosn
     deriving (Eq,Show)
 
@@ -115,11 +131,19 @@ tokenPosn (TokenElse (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenHasNext (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenNext (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenSize (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
+tokenPosn (TokenAnd (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
+tokenPosn (TokenOr (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenInt (AlexPn _ x y) _) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenBool (AlexPn _ x y) _) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenStream (AlexPn _ x y) _) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenVar (AlexPn _ x y) _) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenAssign (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
+tokenPosn (TokenPlusEquals (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
+tokenPosn (TokenMinusEquals (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
+tokenPosn (TokenTimesEquals (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
+tokenPosn (TokenDivEquals (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
+tokenPosn (TokenExponentEquals (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
+tokenPosn (TokenModuloEquals (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenPlus (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenMinus (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenTimes (AlexPn _ x y)) = show(x) ++ " " ++ show(y)

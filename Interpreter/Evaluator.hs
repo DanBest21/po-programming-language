@@ -9,6 +9,8 @@ data Frame = HWhile Exp [Exp]
            | HasNextH
            | NextH
            | SizeH
+           | HAnd Exp          | AndH Exp
+           | HOr Exp           | OrH Exp
            | HLessEqual Exp    | LessEqualH Exp
            | HGreaterEqual Exp | GreaterEqualH Exp
            | HLessThan Exp     | LessThanH Exp
@@ -91,6 +93,16 @@ evalStep ((VarRef x) : es, env, (NextH) : k, out) = (e : es, updateVariable env 
 -- Size statement
 evalStep ((Size e) : es, env, k, out) = (e : es, env, (SizeH) : k, out)
 evalStep ((Stream es) : es', env, (SizeH) : k, out) = ((Int' (length es)) : es', env, k, out)
+
+-- And statement
+evalStep ((And e1 e2) : es, env, k, out) = (e1 : es, env, (HAnd e2) : k, out)
+evalStep ((Boolean' b1) : es, env, (HAnd e2) : k, out) = (e2 : es, env, (AndH (Boolean' b1)) : k, out)
+evalStep ((Boolean' b2) : es, env, (AndH (Boolean' b1)) : k, out) = ((Boolean' (b1 && b2)) : es, env, k, out)
+
+-- Or statement
+evalStep ((Or e1 e2) : es, env, k, out) = (e1 : es, env, (HOr e2) : k, out)
+evalStep ((Boolean' b1) : es, env, (HOr e2) : k, out) = (e2 : es, env, (OrH (Boolean' b1)) : k, out)
+evalStep ((Boolean' b2) : es, env, (OrH (Boolean' b1)) : k, out) = ((Boolean' (b1 || b2)) : es, env, k, out)
 
 -- Less than or equal to statement
 evalStep ((LE e1 e2) : es, env, k, out) = (e1 : es, env, (HLessEqual e2) : k, out)

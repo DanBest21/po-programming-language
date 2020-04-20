@@ -2,6 +2,6 @@ int acc = 0
 
 while (has_next input{1})
 {
-    acc = acc + next input{1}
+    acc += next input{1}
     print acc
 }

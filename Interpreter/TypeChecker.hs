@@ -71,6 +71,20 @@ typeOf tenv (Size e) | tWellTyped = (TypeInt, tenv')
       where (t, tenv') = typeOf tenv e
             tWellTyped = t == TypeStream
 
+-- And type checker
+typeOf tenv (And e1 e2) | tWellTyped1 && tWellTyped2 = (TypeBoolean, nub (tenv1 ++ tenv2))
+                        | not tWellTyped1            = throwTypeError "left-hand side of and expression" TypeBoolean t1
+                        | not tWellTyped2            = throwTypeError "right-hand side of and expression" TypeBoolean t2
+      where ((t1, tenv1), (t2, tenv2)) = (typeOf tenv e1, typeOf tenv e2)
+            (tWellTyped1, tWellTyped2) = (t1 == TypeBoolean, t2 == TypeBoolean)
+
+-- Or type checker
+typeOf tenv (Or e1 e2) | tWellTyped1 && tWellTyped2 = (TypeBoolean, nub (tenv1 ++ tenv2))
+                       | not tWellTyped1            = throwTypeError "left-hand side of or expression" TypeBoolean t1
+                       | not tWellTyped2            = throwTypeError "right-hand side of or expression" TypeBoolean t2
+      where ((t1, tenv1), (t2, tenv2)) = (typeOf tenv e1, typeOf tenv e2)
+            (tWellTyped1, tWellTyped2) = (t1 == TypeBoolean, t2 == TypeBoolean)
+
 -- Less than or equal to type checker
 typeOf tenv (LE e1 e2) | tWellTyped1 && tWellTyped2 = (TypeBoolean, nub (tenv1 ++ tenv2))
                        | not tWellTyped1            = throwTypeError "left-hand side of '<=' expression" TypeInt t1

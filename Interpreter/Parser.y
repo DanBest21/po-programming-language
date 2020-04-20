@@ -27,6 +27,8 @@ import Lexer
     has_next     { TokenHasNext _ }
     next         { TokenNext _ }
     size         { TokenSize _ }
+    and          { TokenAnd _ }
+    or           { TokenOr _ }
     int          { TokenInt _ $$ }
     bool         { TokenBool _ $$ }
     var          { TokenVar _ $$ }
@@ -38,6 +40,12 @@ import Lexer
     '++'         { TokenConcat _ }
     '<-'         { TokenTake _ }
     '='          { TokenAssign _ }
+    '+='         { TokenPlusEquals _ }
+    '-='         { TokenMinusEquals _ }
+    '*='         { TokenTimesEquals _ }
+    '/='         { TokenDivEquals _ }
+    '^='         { TokenExponentEquals _ }
+    '%='         { TokenModuloEquals _ }
     '+'          { TokenPlus _ }
     '-'          { TokenMinus _ }
     '*'          { TokenTimes _ }
@@ -56,10 +64,9 @@ import Lexer
     '>'          { TokenGT _ }
 
 -- Grammar
-%right '=' print
-%nonassoc if
-%nonassoc elif 
-%nonassoc else
+%right '=' '+=' '-=' '*=' '/=' '^=' '%=' print
+%left or
+%left and 
 %left '==' '!='
 %left '>' '<' '>=' '<='
 %left '+' '-'
@@ -82,6 +89,8 @@ Exp : while Exp '{' Expr '}'             { While $2 $4 }
     | has_next Exp                       { HasNext $2 }
     | next Exp                           { Next $2 }
     | size Exp                           { Size $2 }
+    | Exp and Exp                        { And $1 $3 }
+    | Exp or Exp                         { Or $1 $3 }
     | int                                { Int' $1 }
     | bool                               { Boolean' $1 }
     | '[' StreamLiteral ']'              { Stream $2 }
@@ -94,6 +103,12 @@ Exp : while Exp '{' Expr '}'             { While $2 $4 }
     | Exp '<-' Exp                       { Take $1 $3 }
     | Type var '=' Exp                   { VarDec $1 $2 $4 }
     | var '=' Exp                        { VarAssign $1 $3 }
+    | var '+=' Exp                       { VarAssign $1 (Plus (VarRef $1) $3) }
+    | var '-=' Exp                       { VarAssign $1 (Minus (VarRef $1) $3) }
+    | var '*=' Exp                       { VarAssign $1 (Times (VarRef $1) $3) }
+    | var '/=' Exp                       { VarAssign $1 (Div (VarRef $1) $3) }
+    | var '^=' Exp                       { VarAssign $1 (Exponent (VarRef $1) $3) }
+    | var '%=' Exp                       { VarAssign $1 (Modulo (VarRef $1) $3) }
     | var                                { VarRef $1 }
     | Exp '+' Exp                        { Plus $1 $3 }
     | Exp '-' Exp                        { Minus $1 $3 }
@@ -151,6 +166,8 @@ data Exp = While Exp [Exp]
          | HasNext Exp
          | Next Exp
          | Size Exp
+         | And Exp Exp
+         | Or Exp Exp
          | Int' Int
          | Boolean' Bool
          | Stream [Exp]
