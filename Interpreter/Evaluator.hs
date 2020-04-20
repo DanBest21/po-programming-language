@@ -44,10 +44,6 @@ getVariable x [] = error ("Unrecognised variable " ++ x)
 getVariable x ((y, exp) : env) | x == y    = exp
                                | otherwise = getVariable x env
 
--- Sets a new variable in the passed environment.
-setVariable :: Environment -> String -> Exp -> Environment
-setVariable env x exp = (x, exp) : env
-
 -- Updates an existing environment in the passed environment
 updateVariable :: Environment -> String -> Exp -> Environment
 updateVariable env x exp = filter ((/= x) . fst) env ++ [(x, exp)] 
@@ -191,7 +187,7 @@ evalStep ((Int' x) : es, env, (NegateH) : k, out) = ((Int' (negate x)) : es, env
 
 -- Variable declaration statement
 evalStep ((VarDec t x e) : es, env, k, out) = (e : es, env, (VarDecH x) : k, out)
-evalStep (e : es, env, (VarDecH x) : k, out) | isValue e = (es, setVariable env x e, k, out)
+evalStep (e : es, env, (VarDecH x) : k, out) | isValue e = (es, updateVariable env x e, k, out)
 
 -- Variable assignment statement
 evalStep ((VarAssign x e) : es, env, k, out) = (e : es, env, (VarAssignH x) : k, out)
@@ -205,6 +201,7 @@ evalStep (e : es, env, [], out) | isValue e = (es, env, [], out)
 
 -- Function to iterate the small step reduction to termination.
 evaluate' :: [Exp] -> [Exp] -> Output
+evaluate' [] _ = []
 evaluate' es input = evalLoop (es, env, [], [])
   where evalLoop (es, env, k, out) = if (null es') && (null k') then out' else evalLoop (es', env', k', out')
                        where (es', env', k', out') = evalStep (es, env, k, out)
