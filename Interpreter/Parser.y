@@ -75,7 +75,7 @@ Expr : {- empty -}                       { [] }
      | Exps                              { $1 }
 
 Exps : Exp                               { [$1] }
-     | Exp Exps                          { $1 : $3 }
+     | Exp Exps                          { $1 : $2 }
 
 Exp : while Exp '{' Expr '}'             { While $2 $4 }
     | If                                 { $1 }

@@ -1866,7 +1866,7 @@ data Type = TypeNone
           deriving (Eq)
 
 instance Show Type where
-     show (TypeNone) = "TypeNone" 
+     show (TypeNone) = "<no_type>" 
      show (TypeInt) = "int"
      show (TypeBoolean) = "boolean"
      show (TypeStream) = "stream"
