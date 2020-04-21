@@ -23,12 +23,9 @@ fn min(int x, int y) -> int
 }
 
 fn printMinMax(int x, int y)
-{    
-    int z = 1337
-    
+{        
     print (min(x, y))
     print (max(x, y))
-    print z
 }
 
 fn inc(int x, int n) -> int
@@ -48,7 +45,7 @@ fn printLeet()
     print x
 }
 
-// printMinMax(1001, 1000)
-// print (max(min(100,10), 15))
+printMinMax(1001, 1000)
+print (max(min(100,10), 15))
 print inc(5, 100)
-// printLeet()
+printLeet()
