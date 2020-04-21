@@ -1,13 +1,15 @@
 module Evaluator where
 import Parser
+import Data.List (nub)
 
 type Environment = [(String, Exp)]
+type Kontinuation = [Frame]
 
 data Frame = HWhile Exp [Exp]
            | HIf [Exp] [(Exp, [Exp])]
            | PrintH
-           | FnCallH String Environment
-           | FnReturnH String
+           | HFnCall String [Exp] [Exp] Environment | FnCallH [Exp] Environment
+           | FnReturnH [Exp] Environment Kontinuation
            | HasNextH
            | NextH
            | SizeH
@@ -36,8 +38,6 @@ data Frame = HWhile Exp [Exp]
            | VarAssignH String
            deriving (Show)
 
-type Kontinuation = [Frame]
-
 type Output = [Int]
 
 type State = ([Exp], Environment, Kontinuation, Output)
@@ -46,7 +46,7 @@ type State = ([Exp], Environment, Kontinuation, Output)
 getBinding :: String -> Environment -> Exp
 getBinding x [] = error ("Unrecognised variable " ++ x)
 getBinding x ((y, exp) : env) | x == y    = exp
-                               | otherwise = getBinding x env
+                              | otherwise = getBinding x env
 
 -- Updates an existing environment in the passed environment
 updateBinding :: Environment -> String -> Exp -> Environment
@@ -54,6 +54,7 @@ updateBinding env x exp = filter ((/= x) . fst) env ++ [(x, exp)]
 
 -- Checks for terminated expressions.
 isValue :: Exp -> Bool
+isValue (None) = True
 isValue (Int' _) = True
 isValue (Boolean' _) = True
 isValue (Stream []) = True
@@ -61,12 +62,22 @@ isValue (Stream (e : es)) = (isValue e) && (isValue (Stream es))
 isValue _ = False
 
 getFunctionEnvironment :: String -> [Exp] -> Environment -> (Environment, [Exp])
-getFunctionEnvironment x args env = (zip (map snd params) (args), es)
+getFunctionEnvironment x args env = (env' ++ (filter (\(x, e) -> not (x `elem` (map snd params))) env), es)
       where (FnDec y params t es) = getBinding x env
+            env'                  = zip (map snd params) (args)
 
 setupEnvironment :: [Exp] -> Int -> [(String, Exp)]
 setupEnvironment [] _ = []
 setupEnvironment (e : es) i = ("input{" ++ (show i) ++ "}", e) : setupEnvironment es (i + 1) 
+
+getFunctionFrame :: Kontinuation -> Maybe (Frame, Kontinuation)
+getFunctionFrame [] = Nothing
+getFunctionFrame (e@(FnCallH env es) : ks) = Just (e, ks)
+getFunctionFrame (k:ks) = getFunctionFrame ks
+
+getExpFromEnvironment :: Exp -> Environment -> Exp
+getExpFromEnvironment (VarRef x) env = getBinding x env
+getExpFromEnvironment e env = e
 
 -- Small step evaluation function.
 evalStep :: State -> State
@@ -86,19 +97,18 @@ evalStep ((Boolean' b) : es', env, (HIf es elifs) : k, out) | b          = (es +
 evalStep ((Print e) : es, env, k, out) = (e : es, env, (PrintH) : k, out)
 evalStep ((Int' x) : es, env, (PrintH) : k, out) = (es, env, k, out ++ [x])
 
--- Function declaration statement
+-- Function statement
 evalStep (e@(FnDec x params t es) : es', env, k, out) = (es', updateBinding env x e, k, out)
 
--- Function call statement
-evalStep ((FnCall x args) : es, env, k, out) = (es' ++ es, env', (FnCallH x env) : k, out)
-      where (env', es') = getFunctionEnvironment x args env
-evalStep ((FnEnd x) : es, env, (FnCallH y env') : k, out) | x == y    = (es, env', k, out)
-                                                          | otherwise = (es, env, (FnCallH y env') : k, out)
+evalStep ((FnCall x args) : es, env, k, out) = (args, env, (HFnCall x es [] env) : k, out)
+evalStep (e : es, envArgs, (HFnCall x es' args env) : k, out) | isValue e = (es, envArgs, (HFnCall x es' (e : args) env) : k, out)
+evalStep ([], envArgs, (HFnCall x es args env) : k, out) = (es' ++ [FnReturn None], env', (FnCallH es env) : k, out)
+      where (env', es') = getFunctionEnvironment x args envArgs
+evalStep ((FnReturn e) : es, env, k@(_:ks), out) = case getFunctionFrame k of
+                                                Nothing -> error "Need to fix this."
+                                                Just (FnCallH es' env', k') -> (e : es, env, (FnReturnH es' env' k') : k, out)
 
--- Function return statement
-evalStep ((FnReturn x e) : es, env, k, out) = (e : es, env, (FnReturnH x) : k, out)
-evalStep ((FnEnd x) : es, env, (FnReturnH y env') : k, out) = ()
-evalStep (e : es, )
+evalStep (e : es, env, (FnReturnH es' env' k') : k, out) | isValue e = (e : es', env', k', out)
 
 -- Has Next statement
 evalStep ((HasNext e) : es, env, k, out) = (e : es, env, (HasNextH) : k, out)
@@ -228,6 +238,9 @@ evalStep (e : es, env, (VarAssignH x) : k, out) | isValue e = (e : es, updateBin
 
 -- Variable reference statement
 evalStep ((VarRef x) : es, env, k, out) = ((getBinding x env) : es, env, k, out)
+
+-- Catch none statements.
+evalStep ((None) : es, env, k, out) = (es, env, k, out)
 
 -- Catch idempotent statements.
 evalStep (e : es, env, [], out) | isValue e = (es, env, [], out)

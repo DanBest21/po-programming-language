@@ -147,8 +147,8 @@ Type : int_type                          { TypeInt }
      | boolean_type                      { TypeBoolean }
      | stream_type                       { TypeStream }
 
-FnDec : fn var '(' ParamList ')' '{' Expr '}'           { FnDec $2 $4 TypeNone ($7 ++ (FnEnd $2)) }
-      | fn var '(' ParamList ')' '->' Type '{' Expr '}' { FnDec $2 $4 $7 ($9 ++ (FnEnd $2)) }
+FnDec : fn var '(' ParamList ')' '{' Expr '}'           { FnDec $2 $4 TypeNone ($7) }
+      | fn var '(' ParamList ')' '->' Type '{' Expr '}' { FnDec $2 $4 $7 ($9) }
 
 ParamList : {- empty -}                  { [] }
           | Type var                     { [($1, $2)] }
@@ -183,8 +183,7 @@ data Exp = While Exp [Exp]
          | Print Exp
          | FnDec String [(Type, String)] Type [Exp]
          | FnCall String [Exp]
-         | FnReturn String Exp
-         | FnEnd String
+         | FnReturn Exp
          | HasNext Exp
          | Next Exp
          | Size Exp
@@ -193,6 +192,7 @@ data Exp = While Exp [Exp]
          | Int' Int
          | Boolean' Bool
          | Stream [Exp]
+         | None
          | LE Exp Exp
          | GE Exp Exp
          | LT' Exp Exp

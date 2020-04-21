@@ -10,4 +10,34 @@ fn max(int x, int y) -> int
     }
 }
 
-print (max(5, 10))
+fn min(int x, int y) -> int
+{
+    if (x > y)
+    {
+        return y
+    }
+    else
+    {
+        return x
+    }
+}
+
+fn printMinMax(int x, int y)
+{
+    print (min(x, y))
+    print (max(x, y))
+}
+
+fn inc(int x, int n) -> int
+{
+    if (n > 0)
+    {
+        return inc(x+1, n-1)
+    }
+    
+    return x
+}
+
+printMinMax(1001, 1000)
+print (max(min(100,10), 15))
+print inc(5, 5)

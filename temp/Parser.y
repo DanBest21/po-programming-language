@@ -183,7 +183,7 @@ data Exp = While Exp [Exp]
          | Print Exp
          | FnDec String [(Type, String)] Type [Exp]
          | FnCall String [Exp]
-         | FnReturn String Exp
+         | FnReturn Exp
          | HasNext Exp
          | Next Exp
          | Size Exp
@@ -192,6 +192,7 @@ data Exp = While Exp [Exp]
          | Int' Int
          | Boolean' Bool
          | Stream [Exp]
+         | None
          | LE Exp Exp
          | GE Exp Exp
          | LT' Exp Exp
