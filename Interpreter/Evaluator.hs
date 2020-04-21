@@ -101,7 +101,7 @@ evalStep ((Int' x) : es, env, (PrintH) : k, out) = (es, env, k, out ++ [x])
 evalStep (e@(FnDec x params t es) : es', env, k, out) = (es', updateBinding env x e, k, out)
 
 evalStep ((FnCall x args) : es, env, k, out) = (args, env, (HFnCall x es [] env) : k, out)
-evalStep (e : es, envArgs, (HFnCall x es' args env) : k, out) | isValue e = (es, envArgs, (HFnCall x es' (e : args) env) : k, out)
+evalStep (e : es, envArgs, (HFnCall x es' args env) : k, out) | isValue e = (es, envArgs, (HFnCall x es' (args ++ [e]) env) : k, out)
 evalStep ([], envArgs, (HFnCall x es args env) : k, out) = (es' ++ [FnReturn None], env', (FnCallH es env) : k, out)
       where (env', es') = getFunctionEnvironment x args envArgs
 evalStep ((FnReturn e) : es, env, k@(_:ks), out) = case getFunctionFrame k of
@@ -243,6 +243,7 @@ evalStep ((VarRef x) : es, env, k, out) = ((getBinding x env) : es, env, k, out)
 evalStep ((None) : es, env, k, out) = (es, env, k, out)
 
 -- Catch idempotent statements.
+evalStep (e : es, env, (FnCallH es' env') : k, out) | isValue e = (es, env, (FnCallH es' env') : k, out)
 evalStep (e : es, env, [], out) | isValue e = (es, env, [], out)
 
 -- Function to iterate the small step reduction to termination.
