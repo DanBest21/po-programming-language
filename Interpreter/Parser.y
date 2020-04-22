@@ -67,7 +67,7 @@ import Lexer
     '>'          { TokenGT _ }
 
 -- Grammar
-%right '=' '+=' '-=' '*=' '/=' '^=' '%=' print return
+%right '=' '+=' '-=' '*=' '/=' '^=' '%=' print return var
 %left or
 %left and 
 %left '==' '!='
@@ -79,7 +79,7 @@ import Lexer
 %right '<-' ':'
 %right '^'
 %left has_next next size SINGLE_LITERAL
-%left input '[' ']'
+%left input '[' ']' '(' ')'
 %%
 Expr : {- empty -}                       { [] }
      | Exps                              { $1 }

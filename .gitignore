@@ -9,3 +9,4 @@ Interpreter/Po.hi
 Interpreter/Po.o
 Interpreter/TypeChecker.hi
 Interpreter/TypeChecker.o
+Interpreter/Parser.info
