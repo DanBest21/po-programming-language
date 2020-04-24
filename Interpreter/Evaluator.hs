@@ -44,13 +44,20 @@ type State = ([Exp], Environment, Kontinuation, Output)
 
 -- Retrieve the value that is bound to the given variable identifier.
 getBinding :: String -> Environment -> Exp
-getBinding x [] = error ("Unrecognised variable " ++ x)
+getBinding x [] = error $ "Unrecognised variable " ++ x
 getBinding x ((y, exp) : env) | x == y    = exp
                               | otherwise = getBinding x env
 
+setBinding :: Environment -> String -> Exp -> Environment
+setBinding env x exp | availableBinding = env ++ [(x, exp)]
+                     | otherwise        = error $ "Cannot reassign " ++ (show x)
+                where availableBinding  = not $ x `elem` (map fst env)
+
 -- Updates an existing environment in the passed environment
 updateBinding :: Environment -> String -> Exp -> Environment
-updateBinding env x exp = filter ((/= x) . fst) env ++ [(x, exp)] 
+updateBinding env x exp | existingBinding = filter ((/= x) . fst) env ++ [(x, exp)] 
+                        | otherwise       = error $ "Unrecognised variable " ++ x
+            where existingBinding  = x `elem` (map fst env)
 
 -- Checks for terminated expressions.
 isValue :: Exp -> Bool
@@ -103,7 +110,7 @@ evalStep ((Print e) : es, env, k, out) = (e : es, env, (PrintH) : k, out)
 evalStep ((Int' x) : es, env, (PrintH) : k, out) = (es, env, k, out ++ [x])
 
 -- Function statement
-evalStep (e@(FnDec x params t es) : es', env, k, out) = (es', updateBinding env x e, k, out)
+evalStep (e@(FnDec x params t es) : es', env, k, out) = (es', setBinding env x e, k, out)
 
 evalStep ((FnCall x args) : es, env, k, out) = (args, env, (HFnCall x es []) : k, out)
 evalStep (e : es, env, (HFnCall x es' args) : k, out) | isValue e = (es, env, (HFnCall x es' (args ++ [e])) : k, out)
@@ -239,7 +246,7 @@ evalStep ((Int' x) : es, env, (NegateH) : k, out) = ((Int' (negate x)) : es, env
 
 -- Variable declaration statement
 evalStep ((VarDec t x e) : es, env, k, out) = (e : es, env, (VarDecH x) : k, out)
-evalStep (e : es, env, (VarDecH x) : k, out) | isValue e = (e : es, updateBinding env x e, k, out)
+evalStep (e : es, env, (VarDecH x) : k, out) | isValue e = (e : es, setBinding env x e, k, out)
 
 -- Variable assignment statement
 evalStep ((VarAssign x e) : es, env, k, out) = (e : es, env, (VarAssignH x) : k, out)
