@@ -8,7 +8,7 @@ type Kontinuation = [Frame]
 data Frame = HWhile Exp [Exp]
            | HIf [Exp] [(Exp, [Exp])]
            | PrintH
-           | HFnCall String [Exp] [Exp] Environment | FnCallH [Exp] Environment
+           | HFnCall String [Exp] [Exp] | FnCallH [Exp] Environment
            | FnReturnH [Exp] Environment Kontinuation
            | HasNextH
            | NextH
@@ -71,8 +71,14 @@ setupEnvironment (e : es) i = ("input{" ++ (show i) ++ "}", e) : setupEnvironmen
 
 getFunctionFrame :: Kontinuation -> Maybe (Frame, Kontinuation)
 getFunctionFrame [] = Nothing
-getFunctionFrame (e@(FnCallH env es) : ks) = Just (e, ks)
-getFunctionFrame (k:ks) = getFunctionFrame ks
+getFunctionFrame (f@(FnCallH env es) : k) = Just (f, k)
+getFunctionFrame (f:k) = getFunctionFrame k
+
+getGlobalEnvironment :: Environment -> Kontinuation -> Environment
+getGlobalEnvironment env [] = env -- TODO not sure this is needed
+getGlobalEnvironment env k = case getFunctionFrame k of
+                                Nothing      -> env
+                                Just (FnCallH es' env', k') -> getGlobalEnvironment env' k'
 
 getExpFromEnvironment :: Exp -> Environment -> Exp
 getExpFromEnvironment (VarRef x) env = getBinding x env
@@ -99,10 +105,10 @@ evalStep ((Int' x) : es, env, (PrintH) : k, out) = (es, env, k, out ++ [x])
 -- Function statement
 evalStep (e@(FnDec x params t es) : es', env, k, out) = (es', updateBinding env x e, k, out)
 
-evalStep ((FnCall x args) : es, env, k, out) = (args, env, (HFnCall x es [] env) : k, out)
-evalStep (e : es, envArgs, (HFnCall x es' args env) : k, out) | isValue e = (es, envArgs, (HFnCall x es' (args ++ [e]) env) : k, out)
-evalStep ([], envArgs, (HFnCall x es args env) : k, out) = (es', env', (FnCallH es env) : k, out)
-      where (env', es') = getFunctionEnvironment x args envArgs
+evalStep ((FnCall x args) : es, env, k, out) = (args, env, (HFnCall x es []) : k, out)
+evalStep (e : es, env, (HFnCall x es' args) : k, out) | isValue e = (es, env, (HFnCall x es' (args ++ [e])) : k, out)
+evalStep ([], env, (HFnCall x es args) : k, out) = (es', env', (FnCallH es env) : k, out)
+      where (env', es') = getFunctionEnvironment x args (getGlobalEnvironment env k) 
 evalStep ((FnReturn e) : es, env, k@(_:ks), out) = case getFunctionFrame k of
                                                 Nothing -> error "Return keyword can only work within a function."
                                                 Just (FnCallH es' env', k') -> (e : es, env, (FnReturnH es' env' k') : k, out)
