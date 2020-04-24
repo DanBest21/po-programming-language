@@ -54,7 +54,6 @@ updateBinding env x exp = filter ((/= x) . fst) env ++ [(x, exp)]
 
 -- Checks for terminated expressions.
 isValue :: Exp -> Bool
-isValue (None) = True
 isValue (Int' _) = True
 isValue (Boolean' _) = True
 isValue (Stream []) = True
@@ -102,13 +101,17 @@ evalStep (e@(FnDec x params t es) : es', env, k, out) = (es', updateBinding env 
 
 evalStep ((FnCall x args) : es, env, k, out) = (args, env, (HFnCall x es [] env) : k, out)
 evalStep (e : es, envArgs, (HFnCall x es' args env) : k, out) | isValue e = (es, envArgs, (HFnCall x es' (args ++ [e]) env) : k, out)
-evalStep ([], envArgs, (HFnCall x es args env) : k, out) = (es' ++ [FnReturn None], env', (FnCallH es env) : k, out)
+evalStep ([], envArgs, (HFnCall x es args env) : k, out) = (es', env', (FnCallH es env) : k, out)
       where (env', es') = getFunctionEnvironment x args envArgs
 evalStep ((FnReturn e) : es, env, k@(_:ks), out) = case getFunctionFrame k of
-                                                Nothing -> error "Need to fix this."
+                                                Nothing -> error "Return keyword can only work within a function."
                                                 Just (FnCallH es' env', k') -> (e : es, env, (FnReturnH es' env' k') : k, out)
 
+-- Function return statement
 evalStep (e : es, env, (FnReturnH es' env' k') : k, out) | isValue e = (e : es', env', k', out)
+
+-- Function end statement if the function does not return a value.
+evalStep ([], env, (FnCallH es' env') : k, out) = (es', env', k, out)
 
 -- Has Next statement
 evalStep ((HasNext e) : es, env, k, out) = (e : es, env, (HasNextH) : k, out)
@@ -238,9 +241,6 @@ evalStep (e : es, env, (VarAssignH x) : k, out) | isValue e = (e : es, updateBin
 
 -- Variable reference statement
 evalStep ((VarRef x) : es, env, k, out) = ((getBinding x env) : es, env, k, out)
-
--- Catch none statements.
-evalStep ((None) : es, env, k, out) = (es, env, k, out)
 
 -- Catch idempotent statements.
 evalStep (e : es, env, (FnCallH es' env') : k, out) | isValue e = (es, env, (FnCallH es' env') : k, out)

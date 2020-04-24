@@ -2811,7 +2811,6 @@ data Exp = While Exp [Exp]
          | Int' Int
          | Boolean' Bool
          | Stream [Exp]
-         | None
          | LE Exp Exp
          | GE Exp Exp
          | LT' Exp Exp

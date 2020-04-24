@@ -67,7 +67,8 @@ import Lexer
     '>'          { TokenGT _ }
 
 -- Grammar
-%right '=' '+=' '-=' '*=' '/=' '^=' '%=' print return var
+%nonassoc var
+%right '=' '+=' '-=' '*=' '/=' '^=' '%=' print return
 %left or
 %left and 
 %left '==' '!='
@@ -192,7 +193,6 @@ data Exp = While Exp [Exp]
          | Int' Int
          | Boolean' Bool
          | Stream [Exp]
-         | None
          | LE Exp Exp
          | GE Exp Exp
          | LT' Exp Exp
