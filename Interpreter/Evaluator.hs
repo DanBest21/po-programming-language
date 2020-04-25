@@ -220,8 +220,8 @@ evalStep ((Int' y) : es, env, (DivH (Int' x)) : k, out) = ((Int' (x `div` y)) : 
 -- Stream get (by index) statement
 evalStep ((StreamGet e1 e2) : es, env, k, out) = (e1 : es, env, (HStreamGet e2) : k, out)
 evalStep ((Stream e1) : es, env, (HStreamGet e2) : k, out) = (e2 : es, env, (StreamGetH (Stream e1)) : k, out)
-evalStep ((Int' x) : es, env, (StreamGetH (Stream e1)) : k, out) | x < 1 = error "Invalid index: must be at least 1."
-                                                                 | length e1 < x = error $ "Index given (" ++ (show x) ++ ") exceeds stream length (" ++ (show $ length e1) ++ ")."
+evalStep ((Int' x) : es, env, (StreamGetH (Stream e1)) : k, out) | x < 1 = error "Invalid index of '" ++ (show x) ++ "' - must be at least 1."
+                                                                 | length e1 < x = error $ "Index given '" ++ (show x) ++ "' exceeds stream length of '" ++ (show $ length e1) ++ "'."
                                                                  | otherwise =  ((e1 !! (x - 1)) : es, env, k, out)
 
 -- Input get (by index) statement
