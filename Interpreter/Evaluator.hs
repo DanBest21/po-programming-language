@@ -133,8 +133,9 @@ evalStep ((Stream es) : es', env, (HasNextH) : k, out) = ((Boolean' (not(null es
 -- Next statement
 evalStep ((Next e) : es, env, k, out) = (e : es, env, (NextH) : k, out)
 evalStep ((Stream (e : es)) : es', env, (NextH) : k, out) = (e : es', env, k, out)
-evalStep ((VarRef x) : es, env, (NextH) : k, out) = (e : es, updateBinding env x (Stream es'), k, out)
-      where (Stream (e : es')) = getBinding x env
+evalStep ((VarRef x) : es, env, (NextH) : k, out) | null es'  = error "Cannot call next on empty stream."
+                                                  | otherwise = ((head es') : es, updateBinding env x (Stream (tail es')), k, out)
+      where (Stream es') = getBinding x env
 
 -- Size statement
 evalStep ((Size e) : es, env, k, out) = (e : es, env, (SizeH) : k, out)

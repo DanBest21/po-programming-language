@@ -24,6 +24,8 @@ print                           { \p s -> TokenPrint p }
 fn                              { \p s -> TokenFunction p }
 return                          { \p s -> TokenReturn p }
 while                           { \p s -> TokenWhile p }
+process                         { \p s -> TokenProcess p }
+from                            { \p s -> TokenFrom p }
 if                              { \p s -> TokenIf p }
 elif                            { \p s -> TokenElif p }
 else                            { \p s -> TokenElse p }
@@ -80,6 +82,8 @@ data Token =
     TokenFunction AlexPosn       |
     TokenReturn AlexPosn         |
     TokenWhile AlexPosn          |
+    TokenProcess AlexPosn        |
+    TokenFrom AlexPosn           |
     TokenIf AlexPosn             |
     TokenElif AlexPosn           |
     TokenElse AlexPosn           |
@@ -135,6 +139,8 @@ tokenPosn (TokenPrint (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenFunction (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenReturn (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenWhile (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
+tokenPosn (TokenProcess (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
+tokenPosn (TokenFrom (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenIf (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenElif (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
 tokenPosn (TokenElse (AlexPn _ x y)) = show(x) ++ " " ++ show(y)
