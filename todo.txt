@@ -1,11 +1,13 @@
-1. type checker DONE
-2. functions
-3. process
-3.5 pipe err messages to stderr (tho i think it might be doing that already)
-4. try to get more accurate parsing error messages DONE
-4.5. on vardec and varassign, return what gets assigned (so can have a var in an if or something) DONE
-5. += -= etc. DONE
-5.5. fix stream on one line and stream on the next failing as it thinks it should be parsing the latter as a streamget -- FIXED BY ADDING semicolons, maybe work on removing again. UNFIXED (maybe, maybe it wasnt compiled and semicolons do work). 
-5.8 and/or DONE
+1. process
+2. Compile time warnings
+	i. Function with no return type that does not have a print statement
+	ii. Functions with identical names (second one will wipe over the first - there is no polymorphism)
+	iii. Changed type of a variable.
+3. Input error checking
+4. pipe err messages to stderr (tho i think it might be doing that already) 
 -- CONSIDER BEFORE DOING THIS
+5. fix stream on one line and stream on the next failing as it thinks it should be parsing the latter as a streamget -- FIXED BY ADDING semicolons, maybe work on removing again. UNFIXED (maybe, maybe it wasnt compiled and semicolons do work). 
 6. better type error messages (line and col number for AlexPosn; show error line from source code)
+7. Syntax highlighting
+8. First-class functions
+9. Block scope
