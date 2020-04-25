@@ -70,7 +70,7 @@ import Lexer
     '>'          { TokenGT _ }
 
 -- Grammar
-%nonassoc var
+%nonassoc var ','
 %nonassoc VARREF
 %right '=' '+=' '-=' '*=' '/=' '^=' '%=' print return
 %left or
@@ -93,7 +93,7 @@ Exps : Exp                               { [$1] }
      | Exp Exps                          { $1 : $2 }
 
 Exp : while Exp '{' Expr '}'             { While $2 $4 }
-    | process ProcessList                { Process $2 }
+    | process ProcessList '{' Expr '}'   { Process $2 $4 }
     | If                                 { $1 }
     | has_next Exp                       { HasNext $2 }
     | next Exp                           { Next $2 }
@@ -166,8 +166,8 @@ ArgList : {- empty -}                    { [] }
         | Exp                            { [$1] }
         | Exp ',' ArgList                { $1 : $3 }
 
-ProcessList : '[' VarList ']' from Exp                  { [($2, $5)] }
-            | '[' VarList ']' from Exp  ',' ProcessList { ($2, $5) : $7 }
+ProcessList : '[' VarList ']' from Exp %prec SINGLE_LITERAL { [($2, $5)] }
+            | '[' VarList ']' from Exp ',' ProcessList      { ($2, $5) : $7 }
 
 VarList : var                            { [$1] }
         | var ',' VarList                { $1 : $3 }
@@ -195,7 +195,7 @@ instance Show Type where
      show (TypeFunction _ _) = "function" 
 
 data Exp = While Exp [Exp]
-         | Process [([String], Exp)]
+         | Process [([String], Exp)] [Exp]
          | If [(Exp, [Exp])]
          | Print Exp
          | FnDec String [(Type, String)] Type [Exp]

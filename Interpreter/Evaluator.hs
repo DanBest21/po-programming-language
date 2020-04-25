@@ -6,6 +6,7 @@ type Environment = [(String, Exp)]
 type Kontinuation = [Frame]
 
 data Frame = HWhile Exp [Exp]
+           | HProcess [([String], Exp)] [Exp] [Exp]
            | HIf [Exp] [(Exp, [Exp])]
            | PrintH
            | HFnCall String [Exp] [Exp] | FnCallH [Exp] Environment
@@ -50,7 +51,7 @@ getBinding x ((y, exp) : env) | x == y    = exp
 
 setBinding :: Environment -> String -> Exp -> Environment
 setBinding env x exp | availableBinding = env ++ [(x, exp)]
-                     | otherwise        = error $ "Cannot reassign variable '" ++ x ++ "'."
+                     | otherwise        = updateBinding env x exp
                 where availableBinding  = not $ x `elem` (map fst env)
 
 -- Updates an existing environment in the passed environment
@@ -97,7 +98,17 @@ evalStep :: State -> State
 -- While statement
 evalStep ((While e es) : es', env, k, out) = (e : es', env, (HWhile e es) : k, out)
 evalStep ((Boolean' b) : es, env, (HWhile e es') : k, out) | b         = (es' ++ [While e es'] ++ es, env, k, out)
-                                                           | otherwise = (es, env, k, out)                                                       
+                                                           | otherwise = (es, env, k, out) 
+
+-- Process statement
+-- evalStep ((Process plist es) : es', env, k, out) = (map (snd) plist, filter (not . (`elem` vars) . fst) env, (HProcess plist es es') : k, out)
+--       where vars = foldr (++) [] (map (fst) plist)
+-- evalStep ((Int' x) : es, env, (HProcess plist es' es'') : k, out) | (length $ map (fst) plist) <= x = (es, env, (HProcess plist es' es'') : k, out)
+--                                                                   | otherwise                       = (es'', filter (not . (`elem` vars) . fst) env, k, out)
+--       where vars = foldr (++) [] (map (fst) plist)
+-- evalStep (e : es, env, (HProcess plist es' es'') : k, out) = ((Size e) : es, env, (HProcess plist es' es'') : k, out)
+-- evalStep ([], env, (HProcess plist es es') : k, out) = (es ++ [Process plist es] ++ es', env ++ env', k, out)
+--       where env' = [ (x, (Next y)) | (xs, y) <- plist, x <- xs ]                              
 
 -- If/Elif/Else statement
 evalStep ((If ((e, es) : elifs)) : es', env, k, out) = (e : es', env, (HIf es elifs) : k, out)
