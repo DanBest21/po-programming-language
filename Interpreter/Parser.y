@@ -69,6 +69,7 @@ import Lexer
 
 -- Grammar
 %nonassoc var
+%nonassoc VARREF
 %right '=' '+=' '-=' '*=' '/=' '^=' '%=' print return
 %left or
 %left and 
@@ -114,9 +115,9 @@ Exp : while Exp '{' Expr '}'             { While $2 $4 }
     | var '/=' Exp                       { VarAssign $1 (Div (VarRef $1) $3) }
     | var '^=' Exp                       { VarAssign $1 (Exponent (VarRef $1) $3) }
     | var '%=' Exp                       { VarAssign $1 (Modulo (VarRef $1) $3) }
-    | '++' var                           { VarAssign $1 (Plus (VarRef $1) 1) }
-    | '--' var                           { VarAssign $1 (Minus (VarRef $1) 1) }
-    | var                                { VarRef $1 }
+    | '++' var                           { VarAssign $2 (Plus (VarRef $2) (Int' 1)) }
+    | '--' var                           { VarAssign $2 (Minus (VarRef $2) (Int' 1)) }
+    | var %prec VARREF                   { VarRef $1 }
     | Exp '+' Exp                        { Plus $1 $3 }
     | Exp '-' Exp                        { Minus $1 $3 }
     | Exp '*' Exp                        { Times $1 $3 }
