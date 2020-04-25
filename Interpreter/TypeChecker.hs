@@ -1,6 +1,7 @@
 module TypeChecker where
 import Parser
-import Data.List
+import Data.List (nub)
+import Data.Tuple (swap)
 
 type TypeEnvironment = [(String, Type)]
 
@@ -9,13 +10,24 @@ throwTypeError :: String -> Type -> Type -> a
 throwTypeError e expType actType = error ("Type error in " ++ e ++ ":\nExpected type:\t" ++ (show expType) ++ "\nActual type:\t" ++ (show actType)) 
 
 getBindingType :: String -> TypeEnvironment -> Type
-getBindingType x [] = error "Variable binding not found"
+getBindingType x [] = error $ "Unrecognised variable '" ++ x ++ "'."
 getBindingType x ((y, t) : tenv) | x == y    = t
-                             | otherwise = getBindingType x tenv
+                                 | otherwise = getBindingType x tenv
 
 -- Updates an existing environment in the passed environment
 updateBindingType :: String -> Type -> TypeEnvironment -> TypeEnvironment
-updateBindingType x t env = filter ((/= x) . fst) env ++ [(x, t)] 
+updateBindingType x t tenv = filter ((/= x) . fst) tenv ++ [(x, t)] 
+
+getFunctionEnvironment :: String -> Type -> [(Type, String)] -> TypeEnvironment -> TypeEnvironment
+getFunctionEnvironment x t params tenv = (x, (TypeFunction t (map (fst) params))) : tenv' ++ (filter (\(x, e) -> not (x `elem` (map snd params))) tenv)
+      where tenv' = map swap params
+
+checkArgs :: String -> [Type] -> [Type] -> Bool
+checkArgs fname [] [] = True
+checkArgs fname [] _ = False
+checkArgs fname _ [] = False
+checkArgs fname (p : params) (a : args) | p == a    = checkArgs fname params args
+                                        | otherwise = throwTypeError ("arguments of function '" ++ fname ++ "'") p a
 
 typeOf :: TypeEnvironment -> Exp -> (Type, TypeEnvironment)
 
@@ -52,6 +64,23 @@ typeOf tenv (Print e) | tWellTyped = (TypeNone, tenv')
                       | otherwise  = throwTypeError "print statement" TypeInt t
       where (t, tenv') = typeOf tenv e
             tWellTyped = t == TypeInt
+
+-- Function declaration type checker
+typeOf tenv (FnDec x params t es) = (TypeNone, (x, (TypeFunction t' (map (fst) params))) : tenv)
+      where tenv' = getFunctionEnvironment x t params tenv
+            t' = typeOfFuncs tenv' es t x
+
+-- Function call type checker
+typeOf tenv (FnCall x args) | tWellTyped = (t, tenv)
+                            | otherwise  = error $ "Expected " ++ (show paramsCount) ++ " arguments for function '" ++ x ++ "', but found " ++ (show argsCount) ++ "." 
+      where (TypeFunction t params) = getBindingType x tenv
+            paramsCount             = length params
+            argsCount               = length args
+            tWellTyped              = checkArgs x params (map (fst . typeOf tenv) args)        
+
+-- Function return type checker
+-- typeOf tenv (FnReturn e) = error "Return statement should not exist outside of the scope of a function."
+typeOf tenv (FnReturn e) = typeOf tenv e
 
 -- Has Next type checker
 typeOf tenv (HasNext e) | tWellTyped = (TypeBoolean, tenv')
@@ -227,6 +256,26 @@ typeOf tenv (VarAssign x e) | tWellTyped = (t1, updateBindingType x t1 tenv')
 
 -- Variable reference type checker
 typeOf tenv (VarRef x) = (getBindingType x tenv, tenv)
+
+typeOfFuncs :: TypeEnvironment -> [Exp] -> Type -> String -> Type
+typeOfFuncs tenv [] rtype fname = rtype
+typeOfFuncs tenv ((FnReturn e) : es) rtype fname | rtype == TypeNone = error $ "Function '" ++ fname ++ "' should not include a return statement as it has no return type." 
+                                                 | tWellTyped        = typeOfFuncs tenv' es rtype fname
+                                                 | otherwise         = throwTypeError ("return statement of function '" ++ fname ++ "'") rtype t
+      where (t, tenv') = typeOf tenv e
+            tWellTyped = rtype == t
+typeOfFuncs tenv ((While e es) : es') rtype fname | tWellTyped = typeOfFuncs tenv' es' rtype fname
+                                                  | otherwise  = throwTypeError "while statement" TypeBoolean t
+      where (t, tenv') = typeOf tenv e
+            tWellTyped = t == TypeBoolean
+typeOfFuncs tenv ((If []) : es) rtype fname = typeOfFuncs tenv es rtype fname
+typeOfFuncs tenv ((If ((e, es) : elifs)) : es') rtype fname | tWellTyped = typeOfFuncs tenv' ((If elifs) : es') rtype fname
+                                                            | otherwise  = throwTypeError "if statement" TypeBoolean t1
+      where (t1, tenv') = typeOf tenv e
+            t2          = typeOfFuncs tenv' es rtype fname
+            tWellTyped  = (t1 == TypeBoolean) && (t2 == rtype) 
+typeOfFuncs tenv (e : es) rtype fname = seq t (typeOfFuncs tenv' es rtype fname)    
+      where (t, tenv') = typeOf tenv e
 
 -- Iterates through each expression to check it is the valid type
 typeOfExps :: TypeEnvironment -> [Exp] -> (Type, TypeEnvironment)

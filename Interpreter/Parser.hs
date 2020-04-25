@@ -2788,7 +2788,8 @@ parseError (t : ts) = error errorMessage
 data Type = TypeNone
           | TypeInt 
           | TypeBoolean 
-          | TypeStream 
+          | TypeStream
+          | TypeFunction Type [Type]
           deriving (Eq)
 
 instance Show Type where
@@ -2796,6 +2797,7 @@ instance Show Type where
      show (TypeInt) = "int"
      show (TypeBoolean) = "boolean"
      show (TypeStream) = "stream"
+     show (TypeFunction _ _) = "function" 
 
 data Exp = While Exp [Exp]
          | If [(Exp, [Exp])]

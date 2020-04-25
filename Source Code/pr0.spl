@@ -29,10 +29,17 @@ fn printMinMax(int x, int y)
 }
 
 fn inc(int x, int n) -> int
-{
-    if (n > 0)
+{    
+    int i = 0
+    
+    while (i > 5)
     {
-        return inc(x+1, n-1)
+        if (n > 0)
+        {
+            return inc(x + 1, n - 1)
+        }
+
+        i += 1
     }
      
     return x

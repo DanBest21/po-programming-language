@@ -44,19 +44,19 @@ type State = ([Exp], Environment, Kontinuation, Output)
 
 -- Retrieve the value that is bound to the given variable identifier.
 getBinding :: String -> Environment -> Exp
-getBinding x [] = error $ "Unrecognised variable " ++ x
+getBinding x [] = error $ "Unrecognised variable '" ++ x ++ "'."
 getBinding x ((y, exp) : env) | x == y    = exp
                               | otherwise = getBinding x env
 
 setBinding :: Environment -> String -> Exp -> Environment
 setBinding env x exp | availableBinding = env ++ [(x, exp)]
-                     | otherwise        = error $ "Cannot reassign " ++ (show x)
+                     | otherwise        = error $ "Cannot reassign variable '" ++ x ++ "'."
                 where availableBinding  = not $ x `elem` (map fst env)
 
 -- Updates an existing environment in the passed environment
 updateBinding :: Environment -> String -> Exp -> Environment
 updateBinding env x exp | existingBinding = filter ((/= x) . fst) env ++ [(x, exp)] 
-                        | otherwise       = error $ "Unrecognised variable " ++ x
+                        | otherwise       = error $ "Unrecognised variable '" ++ x ++ "'."
             where existingBinding  = x `elem` (map fst env)
 
 -- Checks for terminated expressions.
