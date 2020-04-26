@@ -1,13 +1,14 @@
-1. process
+1. process DONE
 2. Compile time warnings
 	i. Function with no return type that does not have a print statement
 	ii. Functions with identical names (second one will wipe over the first - there is no polymorphism)
 	iii. Changed type of a variable.
 3. Input error checking
-4. pipe err messages to stderr (tho i think it might be doing that already) 
+4. better type error messages (line and col number for AlexPosn; show error line from source code)
 -- CONSIDER BEFORE DOING THIS
-5. fix stream on one line and stream on the next failing as it thinks it should be parsing the latter as a streamget -- FIXED BY ADDING semicolons, maybe work on removing again. UNFIXED (maybe, maybe it wasnt compiled and semicolons do work). 
-6. better type error messages (line and col number for AlexPosn; show error line from source code)
+5. First-class functions
+6. Import libraries
+	i. Prelude/Standard library - including fold
 7. Syntax highlighting
-8. First-class functions
-9. Block scope
+100. Block scope
+1000. fix stream on one line and stream on the next failing as it thinks it should be parsing the latter as a streamget -- FIXED BY ADDING semicolons, maybe work on removing again. UNFIXED (maybe, maybe it wasnt compiled and semicolons do work). 

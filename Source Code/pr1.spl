@@ -1,6 +1,6 @@
-while (size input{1} > 1)
+process input{1} as [a1, a2], input{2} as [b1]
 {
-    print (next input{1})
-    print (next input{1})
-    print (next input{2})
+    print a1
+    print a2
+    print b1
 }

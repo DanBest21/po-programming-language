@@ -98,17 +98,7 @@ evalStep :: State -> State
 -- While statement
 evalStep ((While e es) : es', env, k, out) = (e : es', env, (HWhile e es) : k, out)
 evalStep ((Boolean' b) : es, env, (HWhile e es') : k, out) | b         = (es' ++ [While e es'] ++ es, env, k, out)
-                                                           | otherwise = (es, env, k, out) 
-
--- Process statement
--- evalStep ((Process plist es) : es', env, k, out) = (map (snd) plist, filter (not . (`elem` vars) . fst) env, (HProcess plist es es') : k, out)
---       where vars = foldr (++) [] (map (fst) plist)
--- evalStep ((Int' x) : es, env, (HProcess plist es' es'') : k, out) | (length $ map (fst) plist) <= x = (es, env, (HProcess plist es' es'') : k, out)
---                                                                   | otherwise                       = (es'', filter (not . (`elem` vars) . fst) env, k, out)
---       where vars = foldr (++) [] (map (fst) plist)
--- evalStep (e : es, env, (HProcess plist es' es'') : k, out) = ((Size e) : es, env, (HProcess plist es' es'') : k, out)
--- evalStep ([], env, (HProcess plist es es') : k, out) = (es ++ [Process plist es] ++ es', env ++ env', k, out)
---       where env' = [ (x, (Next y)) | (xs, y) <- plist, x <- xs ]                              
+                                                           | otherwise = (es, env, k, out)                           
 
 -- If/Elif/Else statement
 evalStep ((If ((e, es) : elifs)) : es', env, k, out) = (e : es', env, (HIf es elifs) : k, out)

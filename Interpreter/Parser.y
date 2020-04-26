@@ -24,7 +24,7 @@ import Lexer
     return       { TokenReturn _ }
     while        { TokenWhile _ }
     process      { TokenProcess _ }
-    from         { TokenFrom _ }
+    as           { TokenAs _ }
     if           { TokenIf _ }
     elif         { TokenElif _ }
     else         { TokenElse _ }
@@ -68,6 +68,7 @@ import Lexer
     '%'          { TokenModulo _ }
     '<'          { TokenLT _ }
     '>'          { TokenGT _ }
+    '_'          { TokenUnderscore _ }
 
 -- Grammar
 %nonassoc var ','
@@ -93,7 +94,7 @@ Exps : Exp                               { [$1] }
      | Exp Exps                          { $1 : $2 }
 
 Exp : while Exp '{' Expr '}'             { While $2 $4 }
-    | process ProcessList '{' Expr '}'   { Process $2 $4 }
+    | process ProcessList '{' Expr '}'   { convertProcessToWhile $2 $4 }
     | If                                 { $1 }
     | has_next Exp                       { HasNext $2 }
     | next Exp                           { Next $2 }
@@ -166,10 +167,11 @@ ArgList : {- empty -}                    { [] }
         | Exp                            { [$1] }
         | Exp ',' ArgList                { $1 : $3 }
 
-ProcessList : '[' VarList ']' from Exp %prec SINGLE_LITERAL { [($2, $5)] }
-            | '[' VarList ']' from Exp ',' ProcessList      { ($2, $5) : $7 }
+ProcessList : Exp as '[' VarList ']' %prec SINGLE_LITERAL { [($1, $4)] }
+            | Exp as '[' VarList ']' ',' ProcessList      { ($1, $4) : $7 }
 
 VarList : var                            { [$1] }
+        | '_' ',' VarList                { "_" : $3 }
         | var ',' VarList                { $1 : $3 }
 
 -- Post-amble
@@ -177,8 +179,8 @@ VarList : var                            { [$1] }
 parseError :: [Token] -> a
 parseError [] = error "Unknown error in parsing"
 parseError (t : ts) = error errorMessage
-    where lineCol = words (tokenPosn t)
-          errorMessage = "Parse error at line " ++ (lineCol !! 0) ++ ", column " ++ (lineCol !! 1)
+    where (line, col) = tokenPosn t
+          errorMessage = "Parse error at line " ++ (show line) ++ ", column " ++ (show col)
 
 data Type = TypeNone
           | TypeInt 
@@ -195,7 +197,6 @@ instance Show Type where
      show (TypeFunction _ _) = "function" 
 
 data Exp = While Exp [Exp]
-         | Process [([String], Exp)] [Exp]
          | If [(Exp, [Exp])]
          | Print Exp
          | FnDec String [(Type, String)] Type [Exp]
@@ -232,4 +233,16 @@ data Exp = While Exp [Exp]
          | VarAssign String Exp
          | VarRef String
          deriving (Eq, Show)
+
+checkIfReference :: Exp -> Bool
+checkIfReference (VarRef e) = True
+checkIfReference (InputGet e) = True
+checkIfReference _ = False
+
+convertProcessToWhile :: [(Exp, [String])] -> [Exp] -> Exp
+convertProcessToWhile plist es = While cond (streamDecs ++ varDecs ++ es) 
+     where ((s, size) : plistsize) = [ (e, length vars) | (e, vars) <- plist ]
+           cond                    = foldr (\(e, n) (And x y) -> And x (And y (GE (Size e) (Int' n)))) (And (GE (Size s) (Int' size)) (Boolean' True)) (plistsize)
+           streamDecs              = [ VarDec TypeStream ("_processStream" ++ show(i)) s | ((s, _), i) <- zip plist [1..], not (checkIfReference s) ]
+           varDecs                 = [ VarDec TypeInt x (Next (if (not $ checkIfReference s) then (VarRef ("_processStream" ++ show(i))) else s)) | ((s, xs), i) <- zip plist [1..], x <- xs ]
 }

@@ -1,7 +1,7 @@
 int acc = 0
 
-while (has_next input{1})
+process input{1} as [a1]
 {
-    acc += next input{1}
+    acc += a1
     print acc
 }
