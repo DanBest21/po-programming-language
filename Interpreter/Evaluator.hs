@@ -272,5 +272,9 @@ evaluate' es input = evalLoop (es, env, [], [])
         env = setupEnvironment input 1
 
 -- Evaluates the list of passed expressions.
-evaluate :: [Exp] -> [Exp] -> Output
-evaluate es input = evaluate' es input
+evaluate :: [Exp] -> [[Int]] -> Output
+evaluate es input = evaluate' es (streamsConvert input)
+
+-- Convert a list of list of ints to a list of streams (the input).
+streamsConvert :: [[Int]] -> [Exp]
+streamsConvert = map (\xs -> Stream (map Int' xs))
