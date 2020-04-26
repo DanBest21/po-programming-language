@@ -3,7 +3,7 @@
 	i. Function with no return type that does not have a print statement
 	ii. Functions with identical names (second one will wipe over the first - there is no polymorphism)
 	iii. Changed type of a variable.
-3. Input error checking
+3. Input error checking DONE
 -- CONSIDER BEFORE DOING THIS
 5. First-class functions
 6. Import libraries

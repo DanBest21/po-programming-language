@@ -13,7 +13,7 @@ main = catch main' noParse
 main' = do -- (fileName : _ ) <- getArgs 
            sourceCode <- readFile "../Source Code/pr5.spl" -- fileName
            contents <- readFile "../Tests/p5_input.txt" -- getContents
-           let input = seq (map isInteger (map (++) (streamsSplit contents))) (streamsSplit contents)
+           let input = streamsSplit contents
            let ast = parse $ alexScanTokens $ sourceCode
            let output = seq (typeOfExps [] ast) (evaluate ast input)
            mapM_ (putStrLn . show) output
@@ -27,11 +27,6 @@ streamsSplit :: String -> [[Int]] -- List of streams
 streamsSplit s = map (\i -> map (read . (!! i)) horizontal) [0..(streamLen-1)]
               where horizontal = filter (not . null) $ map words (lines s)
                     streamLen = checkStreamSize (length $ head $ horizontal) (tail horizontal)
-
-isInteger :: (Typeable a) => a -> Bool
-isInteger n = case typeOf n == (typeOf (1::Int)) of
-                False     -> error "Found non-integer in input streams."
-                otherwise -> error "die"
 
 checkStreamSize :: Int -> [[String]] -> Int
 checkStreamSize n [] = n
