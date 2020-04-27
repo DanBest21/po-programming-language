@@ -69,7 +69,6 @@ import Lexer
     '<'          { TokenLT _ }
     '>'          { TokenGT _ }
     '_'          { TokenUnderscore _ }
-    '...'        { TokenEllipsis _ }
 
 -- Grammar
 %nonassoc var ','
@@ -149,11 +148,9 @@ Elif : {- empty -}                       { [] }
 Else : {- empty -}                       { [] }
      | else '{' Expr '}'                 { [(Boolean' True, $3)] }
 
-StreamLiteral : {- empty -}                     { [] }
-              | Exp %prec SINGLE_LITERAL        { [$1] }
-              | Exp ',' StreamLiteral           { $1 : $3 }
-              | int '...' int                   { generateStream $1 $3 }
-              | int '...' int ',' StreamLiteral { (generateStream $1 $3) ++ $5 }
+StreamLiteral : {- empty -}              { [] }
+              | Exp %prec SINGLE_LITERAL { [$1] }
+              | Exp ',' StreamLiteral    { $1 : $3 }
 
 Type : int_type                          { TypeInt }
      | boolean_type                      { TypeBoolean }
@@ -249,9 +246,4 @@ convertProcessToWhile plist es = Block (streamDecs ++ [While cond (varDecs ++ es
            cond                    = foldr (\(e, n) (And x y) -> And x (And y (GE (Size e) (Int' n)))) (And (GE (Size s) (Int' size)) (Boolean' True)) (plistsize)
            streamDecs              = [ VarDec TypeStream ("_processStream" ++ show(i)) s | ((s, _), i) <- zip plist [1..], not (checkIfReference s) ]
            varDecs                 = [ VarDec TypeInt x (Next (if (not $ checkIfReference s) then (VarRef ("_processStream" ++ (show i))) else s)) | ((s, xs), i) <- zip plist [1..], x <- xs ]
-
-generateStream :: Int -> Int -> [Exp]
-generateStream x y | x == y = [Int' x] 
-                   | x < y  = (Int' x) : generateStream (x + 1) y
-                   | x > y  = (Int' x) : generateStream (x - 1) y
 }
