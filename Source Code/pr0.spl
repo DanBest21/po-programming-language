@@ -1,22 +1,4 @@
-process [a1] from input{1}, [b1] from input{2}, [c1] from input{3}
+process [1...10] as [a,b]
 {
-    print c1
-    print b1
-    print a1
-    print a1 + b1
-    print b1 + c1
-}
-
-process input{1} as [a1, a2], input{2} as [b1]
-{
-    print a1
-    print a2
-    print b1
-}
-
-process [a1, a2, a3] from input{1}
-{
-    print a3
-    print 2 * a2
-    print 3 * a1 - 1
+    print a + b
 }

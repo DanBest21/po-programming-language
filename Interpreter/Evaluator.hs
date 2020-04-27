@@ -8,6 +8,7 @@ type Kontinuation = [Frame]
 data Frame = HWhile Exp [Exp]
            | HProcess [([String], Exp)] [Exp] [Exp]
            | HIf [Exp] [(Exp, [Exp])]
+           | BlockH [Exp] Environment
            | PrintH
            | HFnCall String [Exp] [Exp] | FnCallH [Exp] Environment
            | FnReturnH [Exp] Environment Kontinuation
@@ -105,6 +106,10 @@ evalStep ((If ((e, es) : elifs)) : es', env, k, out) = (e : es', env, (HIf es el
 evalStep ((Boolean' b) : es', env, (HIf es elifs) : k, out) | b          = (es ++ es', env, k, out)
                                                             | null elifs = (es', env, k, out)
                                                             | otherwise  = ((If elifs) : es', env, k, out)                                                       
+
+-- Block statement
+evalStep ((Block es) : es', env, k, out) = (es, env, (BlockH es' env) : k, out)
+evalStep ([], env, (BlockH es env') : k, out) = (es, env', k, out)
 
 -- Print statement
 evalStep ((Print e) : es, env, k, out) = (e : es, env, (PrintH) : k, out)
@@ -261,6 +266,7 @@ evalStep ((VarRef x) : es, env, k, out) = ((getBinding x env) : es, env, k, out)
 
 -- Catch idempotent statements.
 evalStep (e : es, env, (FnCallH es' env') : k, out) | isValue e = (es, env, (FnCallH es' env') : k, out)
+evalStep (e : es, env, (BlockH es' env') : k, out) = (es, env, (BlockH es' env') : k, out)
 evalStep (e : es, env, [], out) | isValue e = (es, env, [], out)
 
 -- Function to iterate the small step reduction to termination.

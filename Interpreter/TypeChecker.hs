@@ -59,6 +59,9 @@ typeOf tenv (If ((e, es) : elifs)) | tWellTyped = typeOf (nub (tenv1 ++ tenv2)) 
             (t2, tenv2) = typeOfExps tenv1 es
             tWellTyped  = (t1 == TypeBoolean) && (t2 == TypeNone)
 
+-- Block type checker
+typeOf tenv (Block es) = typeOfExps tenv es
+
 -- Print type checker
 typeOf tenv (Print e) | tWellTyped = (TypeNone, tenv')
                       | otherwise  = throwTypeError "print statement" TypeInt t

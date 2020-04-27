@@ -71,6 +71,7 @@ $alpha [$alpha $digit \_]*      { \p s -> TokenVar p s }
 \<                              { \p s -> TokenLT p }
 \>                              { \p s -> TokenGT p }
 \_                              { \p s -> TokenUnderscore p }
+\.\.\.                          { \p s -> TokenEllipsis p }
 
 -- Post-amble
 {
@@ -129,7 +130,8 @@ data Token =
     TokenModulo AlexPosn         |
     TokenLT AlexPosn             |
     TokenGT AlexPosn             |
-    TokenUnderscore AlexPosn
+    TokenUnderscore AlexPosn     |
+    TokenEllipsis AlexPosn
     deriving (Eq,Show)
 
 tokenPosn :: Token -> (Int, Int)
@@ -188,4 +190,5 @@ tokenPosn (TokenModulo (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenLT (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenGT (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenUnderscore (AlexPn _ x y)) = (x, y)
+tokenPosn (TokenEllipsis (AlexPn _ x y)) = (x, y)
 }
