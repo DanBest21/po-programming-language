@@ -43,8 +43,7 @@ $alpha [$alpha $digit \_]*      { \p s -> TokenVar p s }
 \=\=                            { \p s -> TokenEQ p }
 \!\=                            { \p s -> TokenNE p }
 \:                              { \p s -> TokenCons p }
-\+\+                            { \p s -> TokenPlusPlus p }
-\-\-                            { \p s -> TokenMinusMinus p }
+\+\+                            { \p s -> TokenConcat p }
 \<\-                            { \p s -> TokenTake p }
 \-\>                            { \p s -> TokenReturnArrow p }
 \=                              { \p s -> TokenAssign p }
@@ -102,8 +101,7 @@ data Token =
     TokenEQ AlexPosn             |
     TokenNE AlexPosn             |
     TokenCons AlexPosn           |
-    TokenPlusPlus AlexPosn       |
-    TokenMinusMinus AlexPosn     |
+    TokenConcat AlexPosn         |
     TokenTake AlexPosn           |
     TokenReturnArrow AlexPosn    |
     TokenAssign AlexPosn         |
@@ -160,8 +158,7 @@ tokenPosn (TokenGE (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenEQ (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenNE (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenCons (AlexPn _ x y)) = (x, y)
-tokenPosn (TokenPlusPlus (AlexPn _ x y)) = (x, y)
-tokenPosn (TokenMinusMinus (AlexPn _ x y)) = (x, y)
+tokenPosn (TokenConcat (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenTake (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenReturnArrow (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenAssign (AlexPn _ x y)) = (x, y)

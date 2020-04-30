@@ -1,4 +1,3 @@
-process [6,5,4,3,2,1] as [a,b]
-{
-    print a + b
-}
+int i = 0
+
+print i
