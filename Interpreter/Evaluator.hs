@@ -66,6 +66,7 @@ isValue (Int' _) = True
 isValue (Boolean' _) = True
 isValue (Stream []) = True
 isValue (Stream (e : es)) = (isValue e) && (isValue (Stream es))
+isValue (FnDec _ _ _ _) = True
 isValue _ = False
 
 getFunctionEnvironment :: String -> [Exp] -> Environment -> (Environment, [Exp])
@@ -265,6 +266,8 @@ evalStep ((VarRef x) : es, env, k, out) = ((getBinding x env) : es, env, k, out)
 -- Catch idempotent statements.
 evalStep (e : es, env, (FnCallH es' env') : k, out) | isValue e = (es, env, (FnCallH es' env') : k, out)
 evalStep (e : es, env, [], out) | isValue e = (es, env, [], out)
+
+evalStep (es, env, k, out) = error $ "es: " ++ (show es) ++ "\nenv: " ++ (show env) ++ "\nk: " ++ (show k) 
 
 -- Function to iterate the small step reduction to termination.
 evaluate' :: [Exp] -> [Exp] -> Output

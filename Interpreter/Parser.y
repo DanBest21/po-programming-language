@@ -153,12 +153,15 @@ Type : int_type                          { TypeInt }
      | boolean_type                      { TypeBoolean }
      | stream_type                       { TypeStream }
 
+ParamType : Type                         { $1 }
+          | fn                           { TypeFn }
+
 FnDec : fn var '(' ParamList ')' '{' Expr '}'           { FnDec $2 $4 TypeNone ($7) }
       | fn var '(' ParamList ')' '->' Type '{' Expr '}' { FnDec $2 $4 $7 ($9) }
 
 ParamList : {- empty -}                  { [] }
-          | Type var                     { [($1, $2)] }
-          | Type var ',' ParamList       { ($1, $2) : $4 }
+          | ParamType var                { [($1, $2)] }
+          | ParamType var ',' ParamList  { ($1, $2) : $4 }
 
 ArgList : {- empty -}                    { [] }
         | Exp                            { [$1] }
@@ -183,6 +186,7 @@ data Type = TypeNone
           | TypeInt 
           | TypeBoolean 
           | TypeStream
+          | TypeFn
           | TypeFunction Type [Type]
           deriving (Eq)
 
@@ -191,6 +195,7 @@ instance Show Type where
      show (TypeInt) = "int"
      show (TypeBoolean) = "boolean"
      show (TypeStream) = "stream"
+     show (TypeFn) = "fn"
      show (TypeFunction _ _) = "function" 
 
 data Exp = While Exp [Exp]

@@ -15,7 +15,7 @@ main' = do -- (fileName : _ ) <- getArgs
            contents <- readFile "../Tests/p1_input.txt" -- getContents
            let input = seq (checkInput $ words contents) (streamsSplit contents)
            let ast = parse $ alexScanTokens $ sourceCode
-           let output = seq (typeOfExps [] ast) (evaluate ast input)
+           let output = evaluate ast input -- seq (typeOfExps [] ast) (evaluate ast input)
            mapM_ (putStrLn . show) output
 
 noParse :: ErrorCall -> IO ()

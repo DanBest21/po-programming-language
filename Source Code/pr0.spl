@@ -1,3 +1,11 @@
-int i = 0
+fn inc2(int x) -> int
+{
+    fn inc(int y) -> int
+    {
+        return y + 1
+    }
 
-print i
+    return inc(x) + 1
+}
+
+print inc2(0)
