@@ -69,9 +69,9 @@ isValue (Stream (e : es)) = (isValue e) && (isValue (Stream es))
 isValue (FnDec _ _ _ _) = True
 isValue _ = False
 
-getFunctionEnvironment :: String -> [Exp] -> Environment -> (Environment, [Exp])
-getFunctionEnvironment x args env = (env' ++ (filter (\(x, e) -> not (x `elem` (map snd params))) env), es)
-      where (FnDec y params t es) = getBinding x env
+getFunctionEnvironment :: String -> [Exp] -> Environment -> Environment -> (Environment, [Exp])
+getFunctionEnvironment x args genv cenv = (env' ++ (filter (\(x, e) -> not (x `elem` (map snd params))) genv), es)
+      where (FnDec y params t es) = getBinding x cenv
             env'                  = zip (map snd params) (args)
 
 setupEnvironment :: [Exp] -> Int -> [(String, Exp)]
@@ -115,15 +115,15 @@ evalStep ((Print e) : es, env, k, out) = (e : es, env, (PrintH) : k, out)
 evalStep ((Int' x) : es, env, (PrintH) : k, out) = (es, env, k, out ++ [x])
 
 -- Function statement
-evalStep (e@(FnDec x params t es) : es', env, k, out) = (es', setBinding env x e, k, out)
-
 evalStep ((FnCall x args) : es, env, k, out) = (args, env, (HFnCall x es []) : k, out)
 evalStep (e : es, env, (HFnCall x es' args) : k, out) | isValue e = (es, env, (HFnCall x es' (args ++ [e])) : k, out)
 evalStep ([], env, (HFnCall x es args) : k, out) = (es', env', (FnCallH es env) : k, out)
-      where (env', es') = getFunctionEnvironment x args (getGlobalEnvironment env k) 
+      where (env', es') = getFunctionEnvironment x args (getGlobalEnvironment env k) env
 evalStep ((FnReturn e) : es, env, k@(_:ks), out) = case getFunctionFrame k of
                                                 Nothing -> error "Return keyword can only work within a function."
                                                 Just (FnCallH es' env', k') -> (e : es, env, (FnReturnH es' env' k') : k, out)
+
+evalStep (e@(FnDec x params t es) : es', env, k, out) = (es', setBinding env x e, k, out)
 
 -- Function return statement
 evalStep (e : es, env, (FnReturnH es' env' k') : k, out) | isValue e = (e : es', env', k', out)

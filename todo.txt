@@ -7,7 +7,7 @@
 -- CONSIDER BEFORE DOING THIS
 5. First-class functions
 6. Import libraries
-	i. Prelude/Standard library - including fold
+	i. Prelude/Standard library - including fold, head, tail, init, last, functions for all maths key words
 7. Syntax highlighting
 100. Block scope
 101. better type error messages (line and col number for AlexPosn; show error line from source code)
