@@ -15,7 +15,7 @@ tokens :-
 
 $white+                         ;
 "//".*                          ;
-\;                              ;
+\;                              { \p s -> TokenSemicolon p }
 int                             { \p s -> TokenIntType p }
 stream                          { \p s -> TokenStreamType p }
 boolean                         { \p s -> TokenBooleanType p }
@@ -43,7 +43,8 @@ $alpha [$alpha $digit \_]*      { \p s -> TokenVar p s }
 \=\=                            { \p s -> TokenEQ p }
 \!\=                            { \p s -> TokenNE p }
 \:                              { \p s -> TokenCons p }
-\+\+                            { \p s -> TokenConcat p }
+\+\+                            { \p s -> TokenPlusPlus p }
+\-\-                            { \p s -> TokenMinusMinus p }
 \<\-                            { \p s -> TokenTake p }
 \-\>                            { \p s -> TokenReturnArrow p }
 \=                              { \p s -> TokenAssign p }
@@ -74,6 +75,7 @@ $alpha [$alpha $digit \_]*      { \p s -> TokenVar p s }
 -- Post-amble
 {
 data Token =
+    TokenSemicolon AlexPosn      |
     TokenIntType AlexPosn        |
     TokenStreamType AlexPosn     |
     TokenBooleanType AlexPosn    |
@@ -101,7 +103,8 @@ data Token =
     TokenEQ AlexPosn             |
     TokenNE AlexPosn             |
     TokenCons AlexPosn           |
-    TokenConcat AlexPosn         |
+    TokenPlusPlus AlexPosn       |
+    TokenMinusMinus AlexPosn     |
     TokenTake AlexPosn           |
     TokenReturnArrow AlexPosn    |
     TokenAssign AlexPosn         |
@@ -131,6 +134,7 @@ data Token =
     deriving (Eq,Show)
 
 tokenPosn :: Token -> (Int, Int)
+tokenPosn (TokenSemicolon (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenIntType (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenStreamType (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenBooleanType (AlexPn _ x y)) = (x, y)
@@ -158,7 +162,8 @@ tokenPosn (TokenGE (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenEQ (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenNE (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenCons (AlexPn _ x y)) = (x, y)
-tokenPosn (TokenConcat (AlexPn _ x y)) = (x, y)
+tokenPosn (TokenPlusPlus (AlexPn _ x y)) = (x, y)
+tokenPosn (TokenMinusMinus (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenTake (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenReturnArrow (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenAssign (AlexPn _ x y)) = (x, y)

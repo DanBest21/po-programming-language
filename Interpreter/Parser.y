@@ -15,6 +15,7 @@ import Lexer
 
 -- Token Directive
 %token
+    ';'          { TokenSemicolon _ }
     int_type     { TokenIntType _ }
     stream_type  { TokenStreamType _ }
     boolean_type { TokenBooleanType _ }
@@ -41,7 +42,8 @@ import Lexer
     '=='         { TokenEQ _ }
     '!='         { TokenNE _ }
     ':'          { TokenCons _ }
-    '++'         { TokenConcat _ }
+    '++'         { TokenPlusPlus _ }
+    '--'         { TokenMinusMinus _ }
     '<-'         { TokenTake _ }
     '->'         { TokenReturnArrow _ }
     '='          { TokenAssign _ }
@@ -73,14 +75,14 @@ import Lexer
 %nonassoc var ','
 %nonassoc VARREF
 %right '=' '+=' '-=' '*=' '/=' '^=' '%=' print return
+%left CONCAT
 %left or
 %left and
 %left '==' '!='
 %left '>' '<' '>=' '<='
 %left '+' '-'
 %left '*' '/' '%'
-%right NEG '!'
-%left '++' 
+%right NEG '!' '++' '--'
 %right '<-' ':'
 %right '^'
 %left has_next next size SINGLE_LITERAL
@@ -90,7 +92,9 @@ Expr : {- empty -}                       { [] }
      | Exps                              { $1 }
 
 Exps : Exp                               { [$1] }
+     | Exp ';'                           { [$1] }
      | Exp Exps                          { $1 : $2 }
+     | Exp ';' Exps                      { $1 : $3 }
 
 Exp : while Exp '{' Expr '}'             { While $2 $4 }
     | process ProcessList '{' Expr '}'   { convertProcessToWhile $2 $4 }
@@ -108,7 +112,7 @@ Exp : while Exp '{' Expr '}'             { While $2 $4 }
     | Exp '==' Exp                       { EQ' $1 $3 }
     | Exp '!=' Exp                       { NE $1 $3 }
     | Exp ':' Exp                        { Cons $1 $3 }
-    | Exp '++' Exp                       { Concat $1 $3 }
+    | Exp '++' Exp %prec CONCAT          { Concat $1 $3 }
     | Exp '<-' Exp                       { Take $1 $3 }
     | Type var '=' Exp                   { VarDec $1 $2 $4 }
     | var '=' Exp                        { VarAssign $1 $3 }
@@ -118,6 +122,8 @@ Exp : while Exp '{' Expr '}'             { While $2 $4 }
     | var '/=' Exp                       { VarAssign $1 (Div (VarRef $1) $3) }
     | var '^=' Exp                       { VarAssign $1 (Exponent (VarRef $1) $3) }
     | var '%=' Exp                       { VarAssign $1 (Modulo (VarRef $1) $3) }
+    | '++' var                           { VarAssign $2 (Plus (VarRef $2) (Int' 1)) }
+    | '--' var                           { VarAssign $2 (Minus (VarRef $2) (Int' 1)) }
     | var %prec VARREF                   { VarRef $1 }
     | Exp '+' Exp                        { Plus $1 $3 }
     | Exp '-' Exp                        { Minus $1 $3 }
