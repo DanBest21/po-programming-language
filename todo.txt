@@ -5,10 +5,9 @@
 	iii. Changed type of a variable.
 3. Input error checking DONE
 -- CONSIDER BEFORE DOING THIS
-5. First-class functions
+5. First-class functions DONE
 6. Import libraries
 	i. Prelude/Standard library - including fold, head, tail, init, last, functions for all maths key words
 7. Syntax highlighting
-100. Block scope
 101. better type error messages (line and col number for AlexPosn; show error line from source code)
-1000. fix stream on one line and stream on the next failing as it thinks it should be parsing the latter as a streamget -- FIXED BY ADDING semicolons, maybe work on removing again. UNFIXED (maybe, maybe it wasnt compiled and semicolons do work). 
+1000. fix stream on one line and stream on the next failing as it thinks it should be parsing the latter as a streamget -- FIXED BY ADDING semicolons, maybe work on removing again. UNFIXED (maybe, maybe it wasnt compiled and semicolons do work).  DONE
