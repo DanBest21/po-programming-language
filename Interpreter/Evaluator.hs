@@ -10,6 +10,7 @@ data Frame = HWhile Exp [Exp]
            | HIf [Exp] [(Exp, [Exp])]
            | PrintH
            | HFnCall String [Exp] [Exp] | FnCallH [Exp] Environment
+           | FnDecH String
            | FnReturnH [Exp] Environment Kontinuation
            | HasNextH
            | NextH
@@ -119,14 +120,15 @@ evalStep ((FnCall x args) : es, env, k, out) = (args, env, (HFnCall x es []) : k
 evalStep (e : es, env, (HFnCall x es' args) : k, out) | isValue e = (es, env, (HFnCall x es' (args ++ [e])) : k, out)
 evalStep ([], env, (HFnCall x es args) : k, out) = (es', env', (FnCallH es env) : k, out)
       where (env', es') = getFunctionEnvironment x args (getGlobalEnvironment env k) env
-evalStep ((FnReturn e) : es, env, k@(_:ks), out) = case getFunctionFrame k of
+evalStep ((FnReturn e) : es, env, k, out) = case getFunctionFrame k of
                                                 Nothing -> error "Return keyword can only work within a function."
                                                 Just (FnCallH es' env', k') -> (e : es, env, (FnReturnH es' env' k') : k, out)
 
-evalStep (e@(FnDec x params t es) : es', env, k, out) = (es', setBinding env x e, k, out)
-
 -- Function return statement
+evalStep (e@(FnDec x _ _ _) : es, env, (FnReturnH es' env' k') : k, out) = (e : es', setBinding env' x e, k', out)
 evalStep (e : es, env, (FnReturnH es' env' k') : k, out) | isValue e = (e : es', env', k', out)
+
+evalStep (e@(FnDec x params t es) : es', env, k, out) = (es', setBinding env x e, k, out)
 
 -- Function end statement if the function does not return a value.
 evalStep ([], env, (FnCallH es' env') : k, out) = (es', env', k, out)

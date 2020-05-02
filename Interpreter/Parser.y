@@ -114,7 +114,7 @@ Exp : while Exp '{' Expr '}'             { While $2 $4 }
     | Exp ':' Exp                        { Cons $1 $3 }
     | Exp '++' Exp %prec CONCAT          { Concat $1 $3 }
     | Exp '<-' Exp                       { Take $1 $3 }
-    | Type var '=' Exp                   { VarDec $1 $2 $4 }
+    | Primitive var '=' Exp              { VarDec $1 $2 $4 }
     | var '=' Exp                        { VarAssign $1 $3 }
     | var '+=' Exp                       { VarAssign $1 (Plus (VarRef $1) $3) }
     | var '-=' Exp                       { VarAssign $1 (Minus (VarRef $1) $3) }
@@ -155,19 +155,24 @@ StreamLiteral : {- empty -}              { [] }
               | Exp %prec SINGLE_LITERAL { [$1] }
               | Exp ',' StreamLiteral    { $1 : $3 }
 
-Type : int_type                          { TypeInt }
-     | boolean_type                      { TypeBoolean }
-     | stream_type                       { TypeStream }
+Primitive : int_type                     { TypeInt }
+          | boolean_type                 { TypeBoolean }
+          | stream_type                  { TypeStream }
 
-ParamType : Type                         { $1 }
-          | fn                           { TypeFn }
+Type : Primitive                                   { $1 }
+     | fn '<' '(' TypeList ')' '>'                 { TypeFunction TypeNone $4 }
+     | fn '<' '(' TypeList ')' '->' Type '>'       { TypeFunction $7 $4 }
 
-FnDec : fn var '(' ParamList ')' '{' Expr '}'           { FnDec $2 $4 TypeNone ($7) }
-      | fn var '(' ParamList ')' '->' Type '{' Expr '}' { FnDec $2 $4 $7 ($9) }
+FnDec : fn var '(' ParamList ')' '{' Expr '}'                { FnDec $2 $4 TypeNone ($7) }
+      | fn var '(' ParamList ')' '->' Type '{' Expr '}'      { FnDec $2 $4 $7 ($9) }
 
 ParamList : {- empty -}                  { [] }
-          | ParamType var                { [($1, $2)] }
-          | ParamType var ',' ParamList  { ($1, $2) : $4 }
+          | Type var                     { [($1, $2)] }
+          | Type var ',' ParamList       { ($1, $2) : $4 }
+
+TypeList : {- empty -}                   { [] }
+         | Type                          { [$1] }
+         | Type ',' TypeList             { $1 : $3 }
 
 ArgList : {- empty -}                    { [] }
         | Exp                            { [$1] }
@@ -192,7 +197,6 @@ data Type = TypeNone
           | TypeInt 
           | TypeBoolean 
           | TypeStream
-          | TypeFn
           | TypeFunction Type [Type]
           deriving (Eq)
 
@@ -201,8 +205,7 @@ instance Show Type where
      show (TypeInt) = "int"
      show (TypeBoolean) = "boolean"
      show (TypeStream) = "stream"
-     show (TypeFn) = "fn"
-     show (TypeFunction _ _) = "function" 
+     show (TypeFunction t params) = "function " ++ (show params) ++ " -> " ++ (show t)
 
 data Exp = While Exp [Exp]
          | If [(Exp, [Exp])]

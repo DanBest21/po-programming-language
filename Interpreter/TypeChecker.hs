@@ -26,7 +26,6 @@ checkArgs :: String -> [Type] -> [Type] -> Bool
 checkArgs fname [] [] = True
 checkArgs fname [] _ = False
 checkArgs fname _ [] = False
-checkArgs fname ((TypeFn) : params) ((TypeFunction _ _ ) : args) = checkArgs fname params args
 checkArgs fname (p : params) (a : args) | p == a    = checkArgs fname params args
                                         | otherwise = throwTypeError ("arguments of function '" ++ fname ++ "'") p a
 

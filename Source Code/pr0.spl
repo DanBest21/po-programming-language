@@ -1,11 +1,13 @@
-fn double(int x, fn f)
+fn double(int x, fn<(int) -> fn<(int) -> int>> f)
 {
-    print f(f(x))
+    f(x)
+    add(6)
 }
 
-fn inc(int x) -> int
+fn inc(int x) -> fn<(int) -> int>
 {
-    return x + 1
+
+    return fn add(int y) -> int { return y + x }
 }
 
 double(5, inc)
