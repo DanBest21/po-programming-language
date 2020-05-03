@@ -1,7 +1,7 @@
 import Lexer (alexScanTokens)
 import Parser 
 import Evaluator (Output, load, mergeEnvironments)
-import TypeChecker (typeOfExps)
+import TypeChecker (TypeEnvironment, typeOfExps, mergeTypeEnvironments)
 import System.Environment
 import Control.Exception
 import System.IO
@@ -21,11 +21,14 @@ run :: String -> [[Int]] -> IO (Environment, TypeEnvironment, Output)
 run fileName input = do sourceCode <- readFile fileName
                         let ast = parse $ alexScanTokens $ sourceCode
                         let (imports, ast') = getImports ast
-                        envsOuts <- mapM (\(Import x) -> run ("lib/" ++ x ++ ".spl") []) imports
-                        let importedEnv = foldr1 mergeEnvironments (map fst envsOuts)
+                        envsTenvsOuts <- mapM (\(Import x) -> run ("lib/" ++ x ++ ".spl") []) imports
+                        let envs = map (\(env', _, _) -> env') envsTenvsOuts
+                        let importedEnv = foldr mergeEnvironments [] envs
+                        let tenvs = map (\(_, tenv', _) -> tenv') envsTenvsOuts
+                        let (_, tenv) = typeOfExps (foldr mergeTypeEnvironments [] tenvs) ast'
+                        let (env, out) = load ast' (streamsConvert input) importedEnv
+                        return (env, tenv, out)
                         
-                        let output = seq (typeOfExps [] ast') (load ast' (streamsConvert input) importedEnv)
-                        return output
 
 getImports :: [Exp] -> ([Exp], [Exp])
 getImports [] = ([], [])

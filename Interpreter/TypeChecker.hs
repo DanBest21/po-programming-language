@@ -18,6 +18,9 @@ getBindingType x ((y, t) : tenv) | x == y    = t
 updateBindingType :: String -> Type -> TypeEnvironment -> TypeEnvironment
 updateBindingType x t tenv = filter ((/= x) . fst) tenv ++ [(x, t)] 
 
+mergeTypeEnvironments :: TypeEnvironment -> TypeEnvironment -> TypeEnvironment
+mergeTypeEnvironments tenv1 tenv2 = tenv1 ++ (filter (\(x, t) -> not $ x `elem` (map fst tenv1)) tenv2)
+
 getFunctionEnvironment :: String -> Type -> [(Type, String)] -> TypeEnvironment -> TypeEnvironment
 getFunctionEnvironment x t params tenv = (x, (TypeFunction t (map (fst) params))) : tenv' ++ (filter (\(x, e) -> not (x `elem` (map snd params))) tenv)
       where tenv' = map swap params
