@@ -1,13 +1,10 @@
-fn double(int x, fn<(int) -> fn<(int) -> int>> f)
+int i = 0
+while i < 10
 {
-    f(x)
-    add(6)
+    break
+    print ++i
+    if i == 5
+    {
+        break
+    }
 }
-
-fn inc(int x) -> fn<(int) -> int>
-{
-
-    return fn add(int y) -> int { return y + x }
-}
-
-double(5, inc)

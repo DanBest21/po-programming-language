@@ -22,12 +22,14 @@ getFunctionEnvironment :: String -> Type -> [(Type, String)] -> TypeEnvironment 
 getFunctionEnvironment x t params tenv = (x, (TypeFunction t (map (fst) params))) : tenv' ++ (filter (\(x, e) -> not (x `elem` (map snd params))) tenv)
       where tenv' = map swap params
 
-checkArgs :: String -> [Type] -> [Type] -> Bool
-checkArgs fname [] [] = True
-checkArgs fname [] _ = False
-checkArgs fname _ [] = False
-checkArgs fname (p : params) (a : args) | p == a    = checkArgs fname params args
-                                        | otherwise = throwTypeError ("arguments of function '" ++ fname ++ "'") p a
+checkArgs :: Exp -> [Type] -> [Type] -> Bool
+checkArgs f [] [] = True
+checkArgs f [] _ = False
+checkArgs f _ [] = False
+checkArgs f@(VarRef x) (p : params) (a : args) | p == a    = checkArgs f params args
+                                               | otherwise = throwTypeError ("arguments of function '" ++ x ++ "'") p a
+checkArgs f (p : params) (a : args) | p == a    = checkArgs f params args
+                                    | otherwise = throwTypeError ("arguments of anonymous function") p a
 
 typeOf :: TypeEnvironment -> Exp -> (Type, TypeEnvironment)
 
@@ -43,6 +45,9 @@ typeOf tenv (Stream (e : es)) | tWellTyped = typeOf tenv (Stream es)
                               | otherwise  = throwTypeError "stream definition" TypeInt t
       where (t, tenv') = typeOf tenv e
             tWellTyped = t == TypeInt
+
+-- Break type checker
+typeOf tenv (Break) = (TypeNone, tenv)
 
 -- While type checker
 typeOf tenv (While e es) | tWellTyped = typeOfExps tenv' es
@@ -69,21 +74,34 @@ typeOf tenv (Print e) | tWellTyped = (TypeNone, tenv')
             tWellTyped = t == TypeInt
 
 -- Function declaration type checker
-typeOf tenv (FnDec x params t es) = (TypeNone, (x, (TypeFunction t' (map (fst) params))) : tenv)
+typeOf tenv (FnDec x params t es) = (t', (x, (TypeFunction t' (map (fst) params))) : tenv)
       where tenv' = getFunctionEnvironment x t params tenv
-            t' = typeOfFuncs tenv' es t x
+            t'    = typeOfFuncs tenv' es t x
+
+-- Anonymous function declaration type checker
+typeOf tenv (FnAnonDec params t es) = (t', tenv)
+      where tenv' = getFunctionEnvironment "_anon" t params tenv
+            t'    = typeOfFuncs tenv es t "_anon"
 
 -- Function call type checker
-typeOf tenv (FnCall x args) | tWellTyped = (t, tenv)
-                            | otherwise  = error $ "Expected " ++ (show paramsCount) ++ " arguments for function '" ++ x ++ "', but found " ++ (show argsCount) ++ "." 
+typeOf tenv (FnCall f@(VarRef x) args) | tWellTyped = (t, tenv)
+                                       | otherwise  = error $ "Expected " ++ (show paramsCount) ++ " arguments for function '" ++ x ++ "', but found " ++ (show argsCount) ++ "." 
       where (TypeFunction t params) = getBindingType x tenv
             paramsCount             = length params
             argsCount               = length args
-            tWellTyped              = checkArgs x params (map (fst . typeOf tenv) args)        
+            tWellTyped              = checkArgs f params (map (fst . typeOf tenv) args)        
+
+-- Anonymous function call type checker
+typeOf tenv (FnCall f@(FnCall _ _) args) | tWellTyped = (t, tenv)
+                                              | otherwise  = error $ "Expected " ++ (show paramsCount) ++ " arguments for anonymous function, but found " ++ (show argsCount) ++ "." 
+      where (t', tenv') = typeOf tenv f
+            (TypeFunction t params) = t'
+            paramsCount = length params
+            argsCount   = length args
+            tWellTyped  = checkArgs f params (map (fst . typeOf tenv) args)    
 
 -- Function return type checker
--- typeOf tenv (FnReturn e) = error "Return statement should not exist outside of the scope of a function."
-typeOf tenv (FnReturn e) = typeOf tenv e
+typeOf tenv (FnReturn e) = error "Return statement should not exist outside of the scope of a function."
 
 -- Has Next type checker
 typeOf tenv (HasNext e) | tWellTyped = (TypeBoolean, tenv')
@@ -94,6 +112,12 @@ typeOf tenv (HasNext e) | tWellTyped = (TypeBoolean, tenv')
 -- Next type checker
 typeOf tenv (Next e) | tWellTyped = (TypeInt, tenv')
                      | otherwise  = throwTypeError "next expression" TypeStream t
+      where (t, tenv') = typeOf tenv e
+            tWellTyped = t == TypeStream
+
+-- Next break type checker
+typeOf tenv (NextBreak e) | tWellTyped = (TypeInt, tenv')
+                          | otherwise  = throwTypeError "next expression" TypeStream t
       where (t, tenv') = typeOf tenv e
             tWellTyped = t == TypeStream
 
@@ -248,6 +272,12 @@ typeOf tenv (Negate e) | tWellTyped = (TypeInt, tenv')
 -- Variable declaration type checker
 typeOf tenv (VarDec t1 x e) | tWellTyped = (t1, updateBindingType x t1 tenv')
                             | otherwise  = throwTypeError ("declaration of variable '" ++ x ++ "'") t1 t2
+      where (t2, tenv') = typeOf tenv e
+            tWellTyped  = t1 == t2
+
+-- Variable declaration break type checker
+typeOf tenv (VarDecBreak t1 x e) | tWellTyped = (t1, updateBindingType x t1 tenv')
+                                 | otherwise  = throwTypeError ("declaration of variable '" ++ x ++ "'") t1 t2
       where (t2, tenv') = typeOf tenv e
             tWellTyped  = t1 == t2
 

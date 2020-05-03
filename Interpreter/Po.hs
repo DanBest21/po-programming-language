@@ -11,11 +11,11 @@ main :: IO ()
 main = catch main' noParse
 
 main' = do -- (fileName : _ ) <- getArgs 
-           sourceCode <- readFile "../Source Code/pr0.spl" -- fileName
-           contents <- readFile "../Tests/p1_input.txt" -- getContents
+           sourceCode <- readFile "../Source Code/pr2.spl" -- fileName
+           contents <- readFile "../Tests/p2_input.txt" -- getContents
            let input = seq (checkInput $ words contents) (streamsSplit contents)
            let ast = parse $ alexScanTokens $ sourceCode
-           let output = evaluate ast input -- seq (typeOfExps [] ast) (evaluate ast input)
+           let output = seq (typeOfExps [] ast) (evaluate ast input)
            mapM_ (putStrLn . show) output
 
 noParse :: ErrorCall -> IO ()
@@ -37,7 +37,7 @@ checkInput' (x : xs) | [x] `elem` acceptableChars = checkInput' xs
 streamsSplit :: String -> [[Int]] -- List of streams
 streamsSplit s = map (\i -> map (read . (!! i)) horizontal) [0..(streamLen-1)]
               where horizontal = filter (not . null) $ map words (lines s)
-                    streamLen = checkStreamSize (length $ head $ horizontal) (tail horizontal)
+                    streamLen = (length $ head $ horizontal) --checkStreamSize (length $ head $ horizontal) (tail horizontal)
 
 checkStreamSize :: Int -> [[String]] -> Int
 checkStreamSize n [] = n

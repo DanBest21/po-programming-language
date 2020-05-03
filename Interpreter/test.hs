@@ -1,6 +1,5 @@
 import Lexer
 import Parser
-import Evaluator
 
 main :: IO ()
 main = do

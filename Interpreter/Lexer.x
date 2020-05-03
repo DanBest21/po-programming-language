@@ -25,6 +25,7 @@ fn                              { \p s -> TokenFunction p }
 return                          { \p s -> TokenReturn p }
 while                           { \p s -> TokenWhile p }
 process                         { \p s -> TokenProcess p }
+break                           { \p s -> TokenBreak p }
 as                              { \p s -> TokenAs p }
 if                              { \p s -> TokenIf p }
 elif                            { \p s -> TokenElif p }
@@ -85,6 +86,7 @@ data Token =
     TokenReturn AlexPosn         |
     TokenWhile AlexPosn          |
     TokenProcess AlexPosn        |
+    TokenBreak AlexPosn          |
     TokenAs AlexPosn             |
     TokenIf AlexPosn             |
     TokenElif AlexPosn           |
@@ -144,6 +146,7 @@ tokenPosn (TokenFunction (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenReturn (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenWhile (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenProcess (AlexPn _ x y)) = (x, y)
+tokenPosn (TokenBreak (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenAs (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenIf (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenElif (AlexPn _ x y)) = (x, y)

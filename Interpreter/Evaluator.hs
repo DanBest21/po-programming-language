@@ -2,18 +2,18 @@ module Evaluator where
 import Parser
 import Data.List (nub)
 
-type Environment = [(String, Exp)]
 type Kontinuation = [Frame]
 
-data Frame = HWhile Exp [Exp]
-           | HProcess [([String], Exp)] [Exp] [Exp]
+data Frame = HWhile Exp [Exp] | WhileH Exp [Exp]
            | HIf [Exp] [(Exp, [Exp])]
            | PrintH
-           | HFnCall String [Exp] [Exp] | FnCallH [Exp] Environment
+           | HFnCall [Exp] | FnCallH Exp [Exp] [Exp]
+           | FnEnd [Exp] Environment
            | FnDecH String
            | FnReturnH [Exp] Environment Kontinuation
            | HasNextH
            | NextH
+           | NextBreakH
            | SizeH
            | HAnd Exp          | AndH Exp
            | HOr Exp           | OrH Exp
@@ -37,6 +37,7 @@ data Frame = HWhile Exp [Exp]
            | HModulo Exp       | ModuloH Exp
            | NegateH
            | VarDecH String
+           | VarDecBreakH String
            | VarAssignH String
            deriving (Show)
 
@@ -67,13 +68,18 @@ isValue (Int' _) = True
 isValue (Boolean' _) = True
 isValue (Stream []) = True
 isValue (Stream (e : es)) = (isValue e) && (isValue (Stream es))
-isValue (FnDec _ _ _ _) = True
+isValue (Closure _ _ _ _ _) = True
+--isValue (Break) = True
 isValue _ = False
 
-getFunctionEnvironment :: String -> [Exp] -> Environment -> Environment -> (Environment, [Exp])
-getFunctionEnvironment x args genv cenv = (env' ++ (filter (\(x, e) -> not (x `elem` (map snd params))) genv), es)
-      where (FnDec y params t es) = getBinding x cenv
-            env'                  = zip (map snd params) (args)
+mergeEnvironments :: Environment -> Environment -> Environment
+mergeEnvironments env1 env2 = env1 ++ (filter (\(x, e) -> not $ x `elem` (map fst env1)) env2)
+
+getFunctionEnvironment :: [Exp] -> Environment -> Exp -> (Environment, [Exp])
+getFunctionEnvironment args genv closure = (foldr1 mergeEnvironments [argsEnv, capturedEnv, updatedGenv], es)
+      where (Closure params _ es capturedEnv oldGenv) = closure
+            argsEnv = zip (map snd params) (args)
+            updatedGenv = map (\(x', e) -> (x', getBinding x' genv)) oldGenv
 
 setupEnvironment :: [Exp] -> Int -> [(String, Exp)]
 setupEnvironment [] _ = []
@@ -81,32 +87,55 @@ setupEnvironment (e : es) i = ("input{" ++ (show i) ++ "}", e) : setupEnvironmen
 
 getFunctionFrame :: Kontinuation -> Maybe (Frame, Kontinuation)
 getFunctionFrame [] = Nothing
-getFunctionFrame (f@(FnCallH env es) : k) = Just (f, k)
-getFunctionFrame (f:k) = getFunctionFrame k
+getFunctionFrame (f@(FnEnd _ _) : k) = Just (f, k)
+getFunctionFrame (f : k) = getFunctionFrame k
+
+getBlockFrame :: Kontinuation -> Maybe (Frame, Kontinuation)
+getBlockFrame [] = Nothing
+getBlockFrame (f@(WhileH _ _) : k) = Just (f, k)
+getBlockFrame (f : k) = getBlockFrame k
 
 getGlobalEnvironment :: Environment -> Kontinuation -> Environment
-getGlobalEnvironment env [] = env -- TODO not sure this is needed
+getGlobalEnvironment env [] = env
 getGlobalEnvironment env k = case getFunctionFrame k of
                                 Nothing      -> env
-                                Just (FnCallH es' env', k') -> getGlobalEnvironment env' k'
+                                Just (FnEnd _ env', k') -> getGlobalEnvironment env' k'
+
+getContainingEnvironment :: Environment -> Kontinuation -> Environment
+getContainingEnvironment env [] = env
+getContainingEnvironment env k = case getFunctionFrame k of
+                                Nothing      -> env
+                                Just (FnEnd _ env', _) -> env'
+
+getNonGlobalEnvironment :: Environment -> Kontinuation -> Environment
+getNonGlobalEnvironment env [] = []
+getNonGlobalEnvironment env k = case getFunctionFrame k of
+                                Nothing      -> []
+                                Just (FnEnd _ env', k') -> mergeEnvironments env (getNonGlobalEnvironment env' k')
 
 getExpFromEnvironment :: Exp -> Environment -> Exp
 getExpFromEnvironment (VarRef x) env = getBinding x env
 getExpFromEnvironment e env = e
+
+getClosure :: Exp -> Environment -> Environment -> Exp
+getClosure (FnDec _ params t es) env genv = (Closure params t es env genv)
+getClosure (FnAnonDec params t es) env genv = (Closure params t es env genv)
 
 -- Small step evaluation function.
 evalStep :: State -> State
 
 -- While statement
 evalStep ((While e es) : es', env, k, out) = (e : es', env, (HWhile e es) : k, out)
-evalStep ((Boolean' b) : es, env, (HWhile e es') : k, out) | b         = (es' ++ [While e es'] ++ es, env, k, out)
-                                                           | otherwise = (es, env, k, out)                           
+evalStep ((Boolean' b) : es', env, (HWhile e es) : k, out) | b         = (es, env, (WhileH (While e es) es') : k, out)
+                                                           | otherwise = (es', env, k, out)                         
+
+evalStep ([], env, (WhileH e es') : k, out) = (e : es', env, k, out)  
 
 -- If/Elif/Else statement
 evalStep ((If ((e, es) : elifs)) : es', env, k, out) = (e : es', env, (HIf es elifs) : k, out)
-evalStep ((Boolean' b) : es', env, (HIf es elifs) : k, out) | b          = (es ++ es', env, k, out)
-                                                            | null elifs = (es', env, k, out)
-                                                            | otherwise  = ((If elifs) : es', env, k, out)                                                       
+evalStep ((Boolean' b) : es', env, (HIf es elifs ) : k, out) | b          = (es ++ es', env, k, out)
+                                                             | null elifs = (es', env, k, out)
+                                                             | otherwise  = ((If elifs) : es', env, k, out)                                                       
 
 -- Block statement
 evalStep ((Block es) : es', env, k, out) = (es ++ es', env, k, out)
@@ -116,22 +145,28 @@ evalStep ((Print e) : es, env, k, out) = (e : es, env, (PrintH) : k, out)
 evalStep ((Int' x) : es, env, (PrintH) : k, out) = (es, env, k, out ++ [x])
 
 -- Function statement
-evalStep ((FnCall x args) : es, env, k, out) = (args, env, (HFnCall x es []) : k, out)
-evalStep (e : es, env, (HFnCall x es' args) : k, out) | isValue e = (es, env, (HFnCall x es' (args ++ [e])) : k, out)
-evalStep ([], env, (HFnCall x es args) : k, out) = (es', env', (FnCallH es env) : k, out)
-      where (env', es') = getFunctionEnvironment x args (getGlobalEnvironment env k) env
+evalStep ((FnCall e args) : es, env, k, out) = (e : es, env, (HFnCall args) : k, out)
+evalStep (e : es, env, (HFnCall args) : k, out) | isValue e = (args, env, (FnCallH e es []) : k, out)
+evalStep (e : es, env, (FnCallH e' es' args) : k, out) | isValue e = (es, env, (FnCallH e' es' (args ++ [e])) : k, out)
+evalStep ([], env, (FnCallH e es args) : k, out) = (es', env', (FnEnd es env) : k, out)
+      where (env', es') = getFunctionEnvironment args (getGlobalEnvironment env k) e
 evalStep ((FnReturn e) : es, env, k, out) = case getFunctionFrame k of
-                                                Nothing -> error "Return keyword can only work within a function."
-                                                Just (FnCallH es' env', k') -> (e : es, env, (FnReturnH es' env' k') : k, out)
+                                                Nothing -> error "Can only return inside a function."
+                                                Just (FnEnd es' env', k') -> (e : es, env, (FnReturnH es' env' k') : k, out)
 
 -- Function return statement
-evalStep (e@(FnDec x _ _ _) : es, env, (FnReturnH es' env' k') : k, out) = (e : es', setBinding env' x e, k', out)
 evalStep (e : es, env, (FnReturnH es' env' k') : k, out) | isValue e = (e : es', env', k', out)
 
-evalStep (e@(FnDec x params t es) : es', env, k, out) = (es', setBinding env x e, k, out)
+-- Function declaration statement
+evalStep (e@(FnDec x params t es) : es', env, k, out) = (closure : es', setBinding env x closure, k, out)
+      where closure = getClosure e (getNonGlobalEnvironment env k) (getContainingEnvironment env k)
 
+-- Anonymous function declaration statement
+evalStep (e@(FnAnonDec params t es) : es', env, k, out) = (closure : es', env, k, out)
+      where closure = getClosure e (getNonGlobalEnvironment env k) (getContainingEnvironment env k)
+      
 -- Function end statement if the function does not return a value.
-evalStep ([], env, (FnCallH es' env') : k, out) = (es', env', k, out)
+evalStep ([], env, (FnEnd es' env') : k, out) = (es', env', k, out)
 
 -- Has Next statement
 evalStep ((HasNext e) : es, env, k, out) = (e : es, env, (HasNextH) : k, out)
@@ -142,6 +177,16 @@ evalStep ((Next e) : es, env, k, out) = (e : es, env, (NextH) : k, out)
 evalStep ((Stream (e : es)) : es', env, (NextH) : k, out) = (e : es', env, k, out)
 evalStep ((VarRef x) : es, env, (NextH) : k, out) | null es'  = error "Cannot call next on empty stream."
                                                   | otherwise = ((head es') : es, updateBinding env x (Stream (tail es')), k, out)
+      where (Stream es') = getBinding x env
+
+-- Process statement
+evalStep ((VarDecBreak t x e@(NextBreak _)) : es, env, k, out) = (e : es, env, (VarDecBreakH x) : k, out)
+evalStep (e : es, env, (VarDecBreakH x) : k, out) | isValue e = (es, setBinding env x e, k, out)
+
+evalStep ((NextBreak e) : es, env, k, out) = (e : es, env, (NextBreakH) : k, out)
+evalStep ((Stream (e : es)) : es', env, (NextBreakH) : k, out) = (e : es', env, k, out)
+evalStep ((VarRef x) : es, env, (NextBreakH) : k, out) | null es'  = (Break : es, env, k, out)
+                                                       | otherwise = ((head es') : es, updateBinding env x (Stream (tail es')), k, out)
       where (Stream es') = getBinding x env
 
 -- Size statement
@@ -265,11 +310,17 @@ evalStep (e : es, env, (VarAssignH x) : k, out) | isValue e = (e : es, updateBin
 -- Variable reference statement
 evalStep ((VarRef x) : es, env, k, out) = ((getBinding x env) : es, env, k, out)
 
+-- Break statement
+evalStep ((Break) : es, env, k, out) = case getBlockFrame k of
+                                          Nothing -> error "Can only break inside a while loop."
+                                          Just (WhileH _ es', k') -> (es', env, k', out)
+
 -- Catch idempotent statements.
-evalStep (e : es, env, (FnCallH es' env') : k, out) | isValue e = (es, env, (FnCallH es' env') : k, out)
+evalStep (e : es, env, (FnEnd es' env') : k, out) | isValue e = (es, env, (FnEnd es' env') : k, out)
+evalStep (e : es, env, (WhileH e' es') : k, out) | isValue e = (es, env, (WhileH e' es') : k, out)
 evalStep (e : es, env, [], out) | isValue e = (es, env, [], out)
 
-evalStep (es, env, k, out) = error $ "es: " ++ (show es) ++ "\nenv: " ++ (show env) ++ "\nk: " ++ (show k) 
+evalStep (es, env, k, out) = error $ "es: " ++ (show es) ++ "\nenv: " ++ (show env) ++ "\nk: " ++ (show k) ++ "\nout: " ++ (show out)
 
 -- Function to iterate the small step reduction to termination.
 evaluate' :: [Exp] -> [Exp] -> Output

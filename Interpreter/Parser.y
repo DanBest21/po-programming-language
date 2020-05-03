@@ -25,6 +25,7 @@ import Lexer
     return       { TokenReturn _ }
     while        { TokenWhile _ }
     process      { TokenProcess _ }
+    break        { TokenBreak _ }
     as           { TokenAs _ }
     if           { TokenIf _ }
     elif         { TokenElif _ }
@@ -85,7 +86,7 @@ import Lexer
 %right NEG '!' '++' '--'
 %right '<-' ':'
 %right '^'
-%left has_next next size SINGLE_LITERAL
+%left has_next next size SINGLE_LITERAL SINGLE_ARG
 %left input '[' ']' '(' ')'
 %%
 Expr : {- empty -}                       { [] }
@@ -106,6 +107,7 @@ Exp : while Exp '{' Expr '}'             { While $2 $4 }
     | Exp or Exp                         { Or $1 $3 }
     | int                                { Int' $1 }
     | bool                               { Boolean' $1 }
+    | break                              { Break }
     | '[' StreamLiteral ']'              { Stream $2 }
     | Exp '<=' Exp                       { LE $1 $3 }
     | Exp '>=' Exp                       { GE $1 $3 }
@@ -114,7 +116,7 @@ Exp : while Exp '{' Expr '}'             { While $2 $4 }
     | Exp ':' Exp                        { Cons $1 $3 }
     | Exp '++' Exp %prec CONCAT          { Concat $1 $3 }
     | Exp '<-' Exp                       { Take $1 $3 }
-    | Primitive var '=' Exp              { VarDec $1 $2 $4 }
+    | Type var '=' Exp                   { VarDec $1 $2 $4 }
     | var '=' Exp                        { VarAssign $1 $3 }
     | var '+=' Exp                       { VarAssign $1 (Plus (VarRef $1) $3) }
     | var '-=' Exp                       { VarAssign $1 (Minus (VarRef $1) $3) }
@@ -133,7 +135,8 @@ Exp : while Exp '{' Expr '}'             { While $2 $4 }
     | input '{' Exp '}'                  { InputGet $3 }
     | print Exp                          { Print $2 }
     | FnDec                              { $1 }
-    | var '(' ArgList ')'                { FnCall $1 $3 }
+    | FnAnonDec                          { $1 }
+    | Exp '(' ArgList ')'                { FnCall $1 $3 }
     | return Exp                         { FnReturn $2 }
     | '!' Exp                            { Not $2 }
     | Exp '^' Exp                        { Exponent $1 $3 }
@@ -155,16 +158,17 @@ StreamLiteral : {- empty -}              { [] }
               | Exp %prec SINGLE_LITERAL { [$1] }
               | Exp ',' StreamLiteral    { $1 : $3 }
 
-Primitive : int_type                     { TypeInt }
-          | boolean_type                 { TypeBoolean }
-          | stream_type                  { TypeStream }
-
-Type : Primitive                                   { $1 }
+Type : int_type                                    { TypeInt }
+     | boolean_type                                { TypeBoolean }
+     | stream_type                                 { TypeStream }
      | fn '<' '(' TypeList ')' '>'                 { TypeFunction TypeNone $4 }
      | fn '<' '(' TypeList ')' '->' Type '>'       { TypeFunction $7 $4 }
 
 FnDec : fn var '(' ParamList ')' '{' Expr '}'                { FnDec $2 $4 TypeNone ($7) }
       | fn var '(' ParamList ')' '->' Type '{' Expr '}'      { FnDec $2 $4 $7 ($9) }
+
+FnAnonDec : fn '(' ParamList ')' '{' Expr '}'                { FnAnonDec $3 TypeNone $6 }
+          | fn '(' ParamList ')' '->' Type '{' Expr '}'      { FnAnonDec $3 $6 $8 }
 
 ParamList : {- empty -}                  { [] }
           | Type var                     { [($1, $2)] }
@@ -175,7 +179,7 @@ TypeList : {- empty -}                   { [] }
          | Type ',' TypeList             { $1 : $3 }
 
 ArgList : {- empty -}                    { [] }
-        | Exp                            { [$1] }
+        | Exp %prec SINGLE_ARG           { [$1] }
         | Exp ',' ArgList                { $1 : $3 }
 
 ProcessList : Exp as '[' VarList ']' %prec SINGLE_LITERAL { [($1, $4)] }
@@ -205,17 +209,23 @@ instance Show Type where
      show (TypeInt) = "int"
      show (TypeBoolean) = "boolean"
      show (TypeStream) = "stream"
-     show (TypeFunction t params) = "function " ++ (show params) ++ " -> " ++ (show t)
+     show (TypeFunction t params) = "function (" ++ (show params) ++ " -> " ++ (show t) ++ ")"
+
+type Environment = [(String, Exp)]
 
 data Exp = While Exp [Exp]
          | If [(Exp, [Exp])]
+         | Break
          | Block [Exp]
          | Print Exp
          | FnDec String [(Type, String)] Type [Exp]
-         | FnCall String [Exp]
+         | FnAnonDec [(Type, String)] Type [Exp]
+         | FnCall Exp [Exp]
          | FnReturn Exp
+         | Closure [(Type, String)] Type [Exp] Environment Environment
          | HasNext Exp
          | Next Exp
+         | NextBreak Exp
          | Size Exp
          | And Exp Exp
          | Or Exp Exp
@@ -242,6 +252,7 @@ data Exp = While Exp [Exp]
          | Modulo Exp Exp
          | Negate Exp
          | VarDec Type String Exp
+         | VarDecBreak Type String Exp
          | VarAssign String Exp
          | VarRef String
          deriving (Eq, Show)
@@ -252,9 +263,9 @@ checkIfReference (InputGet e) = True
 checkIfReference _ = False
 
 convertProcessToWhile :: [(Exp, [String])] -> [Exp] -> Exp
-convertProcessToWhile plist es = Block (streamDecs ++ [While cond (varDecs ++ es)]) 
+convertProcessToWhile plist es = Block (streamDecs ++ [While (Boolean' True) (varDecs ++ es)]) 
      where ((s, size) : plistsize) = [ (if (not $ checkIfReference e) then (VarRef ("_processStream" ++ (show i))) else e, length vars) | ((e, vars), i) <- zip plist [1..] ]
-           cond                    = foldr (\(e, n) (And x y) -> And x (And y (GE (Size e) (Int' n)))) (And (GE (Size s) (Int' size)) (Boolean' True)) (plistsize)
-           streamDecs              = [ VarDec TypeStream ("_processStream" ++ show(i)) s | ((s, _), i) <- zip plist [1..], not (checkIfReference s) ]
-           varDecs                 = [ VarDec TypeInt x (Next (if (not $ checkIfReference s) then (VarRef ("_processStream" ++ (show i))) else s)) | ((s, xs), i) <- zip plist [1..], x <- xs ]
+           --cond                    = foldr (\(e, n) (Or x y) -> Or x (Or y (GE (Size e) (Int' n)))) (Or (GE (Size s) (Int' size)) (Boolean' False)) (plistsize)
+           streamDecs              = [ VarDecBreak TypeStream ("_processStream" ++ show(i)) s | ((s, _), i) <- zip plist [1..], not (checkIfReference s) ]
+           varDecs                 = [ VarDecBreak TypeInt x (NextBreak (if (not $ checkIfReference s) then (VarRef ("_processStream" ++ (show i))) else s)) | ((s, xs), i) <- zip plist [1..], x <- xs ]
 }
