@@ -11,7 +11,7 @@ main :: IO ()
 main = catch main' noParse
 
 main' = do -- (fileName : _ ) <- getArgs 
-           sourceCode <- readFile "../Source Code/pr2.spl" -- fileName
+           sourceCode <- readFile "../Source Code/pr0.spl" -- fileName
            contents <- readFile "../Tests/p2_input.txt" -- getContents
            let input = seq (checkInput $ words contents) (streamsSplit contents)
            let ast = parse $ alexScanTokens $ sourceCode

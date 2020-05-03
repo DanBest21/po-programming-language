@@ -1,10 +1,18 @@
-int i = 0
-while i < 10
-{
-    break
-    print ++i
-    if i == 5
-    {
-        break
-    }
+fn<(int) -> int> alsoalsoAdd = fn (int x) -> int {
+    return 5 + x
 }
+
+fn hey(fn<(int) -> int> f, int x) -> int {
+    fn<(int) -> int> h = fn (int z) -> int {return z}
+
+    return h(f(x))
+}
+
+fn add(int x) -> int {
+    return 4 + x
+}
+
+fn<(int) -> int> alsoAdd = add
+
+print alsoAdd(6)
+print hey(add, 12)
