@@ -81,10 +81,6 @@ getFunctionEnvironment args genv closure = (foldr1 mergeEnvironments [argsEnv, c
             argsEnv = zip (map snd params) (args)
             updatedGenv = map (\(x', e) -> (x', getBinding x' genv)) oldGenv
 
-setupEnvironment :: [Exp] -> Int -> [(String, Exp)]
-setupEnvironment [] _ = []
-setupEnvironment (e : es) i = ("input{" ++ (show i) ++ "}", e) : setupEnvironment es (i + 1) 
-
 getFunctionFrame :: Kontinuation -> Maybe (Frame, Kontinuation)
 getFunctionFrame [] = Nothing
 getFunctionFrame (f@(FnEnd _ _) : k) = Just (f, k)
@@ -320,20 +316,18 @@ evalStep (e : es, env, (FnEnd es' env') : k, out) | isValue e = (es, env, (FnEnd
 evalStep (e : es, env, (WhileH e' es') : k, out) | isValue e = (es, env, (WhileH e' es') : k, out)
 evalStep (e : es, env, [], out) | isValue e = (es, env, [], out)
 
+evalStep ((Import _) : es, env, k, out) = error "Import statements can only exist at the beginning of a file."
+
 evalStep (es, env, k, out) = error $ "es: " ++ (show es) ++ "\nenv: " ++ (show env) ++ "\nk: " ++ (show k) ++ "\nout: " ++ (show out)
 
--- Function to iterate the small step reduction to termination.
-evaluate' :: [Exp] -> [Exp] -> Output
-evaluate' [] _ = []
-evaluate' es input = evalLoop (es, env, [], [])
-  where evalLoop (es, env, k, out) = if (null es') && (null k') then out' else evalLoop (es', env', k', out')
+setupEnvironment :: [Exp] -> Int -> [(String, Exp)]
+setupEnvironment [] _ = []
+setupEnvironment (e : es) i = ("input{" ++ (show i) ++ "}", e) : setupEnvironment es (i + 1) 
+
+-- Function to iterate the small step reduction to termination, returning the final environment
+load :: [Exp] -> [Exp] -> Environment -> (Environment, Output)
+load [] _ _ = ([], [])
+load es input startingEnv = evalLoop (es, env, [], [])
+  where evalLoop (es, env, k, out) = if (null es') && (null k') then (env', out') else evalLoop (es', env', k', out')
                        where (es', env', k', out') = evalStep (es, env, k, out)
-        env = setupEnvironment input 1
-
--- Evaluates the list of passed expressions.
-evaluate :: [Exp] -> [[Int]] -> Output
-evaluate es input = evaluate' es (streamsConvert input)
-
--- Convert a list of list of ints to a list of streams (the input).
-streamsConvert :: [[Int]] -> [Exp]
-streamsConvert = map (\xs -> Stream (map Int' xs))
+        env = mergeEnvironments startingEnv (setupEnvironment input 1) 

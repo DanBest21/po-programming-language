@@ -19,6 +19,7 @@ import Lexer
     int_type     { TokenIntType _ }
     stream_type  { TokenStreamType _ }
     boolean_type { TokenBooleanType _ }
+    import       { TokenImport _ }
     input        { TokenInput _ }
     print        { TokenPrint _ }
     fn           { TokenFunction _ }
@@ -97,7 +98,8 @@ Exps : Exp                               { [$1] }
      | Exp Exps                          { $1 : $2 }
      | Exp ';' Exps                      { $1 : $3 }
 
-Exp : while Exp '{' Expr '}'             { While $2 $4 }
+Exp : import var                         { Import $2 }
+    | while Exp '{' Expr '}'             { While $2 $4 }
     | process ProcessList '{' Expr '}'   { convertProcessToWhile $2 $4 }
     | If                                 { $1 }
     | has_next Exp                       { HasNext $2 }
@@ -213,7 +215,8 @@ instance Show Type where
 
 type Environment = [(String, Exp)]
 
-data Exp = While Exp [Exp]
+data Exp = Import String
+         | While Exp [Exp]
          | If [(Exp, [Exp])]
          | Break
          | Block [Exp]
@@ -265,7 +268,6 @@ checkIfReference _ = False
 convertProcessToWhile :: [(Exp, [String])] -> [Exp] -> Exp
 convertProcessToWhile plist es = Block (streamDecs ++ [While (Boolean' True) (varDecs ++ es)]) 
      where ((s, size) : plistsize) = [ (if (not $ checkIfReference e) then (VarRef ("_processStream" ++ (show i))) else e, length vars) | ((e, vars), i) <- zip plist [1..] ]
-           --cond                    = foldr (\(e, n) (Or x y) -> Or x (Or y (GE (Size e) (Int' n)))) (Or (GE (Size s) (Int' size)) (Boolean' False)) (plistsize)
            streamDecs              = [ VarDecBreak TypeStream ("_processStream" ++ show(i)) s | ((s, _), i) <- zip plist [1..], not (checkIfReference s) ]
            varDecs                 = [ VarDecBreak TypeInt x (NextBreak (if (not $ checkIfReference s) then (VarRef ("_processStream" ++ (show i))) else s)) | ((s, xs), i) <- zip plist [1..], x <- xs ]
 }

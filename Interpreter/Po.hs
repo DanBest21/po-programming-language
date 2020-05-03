@@ -1,22 +1,37 @@
 import Lexer (alexScanTokens)
-import Parser (parse)
-import Evaluator (evaluate)
+import Parser 
+import Evaluator (Output, load, mergeEnvironments)
 import TypeChecker (typeOfExps)
 import System.Environment
-import Control.Exception hiding (evaluate)
+import Control.Exception
 import System.IO
 import Data.Typeable
 
 main :: IO ()
 main = catch main' noParse
 
+main' :: IO ()
 main' = do -- (fileName : _ ) <- getArgs 
-           sourceCode <- readFile "../Source Code/pr0.spl" -- fileName
            contents <- readFile "../Tests/p2_input.txt" -- getContents
            let input = seq (checkInput $ words contents) (streamsSplit contents)
-           let ast = parse $ alexScanTokens $ sourceCode
-           let output = seq (typeOfExps [] ast) (evaluate ast input)
+           (_, _, output) <- run "../Source Code/pr0.spl" input
            mapM_ (putStrLn . show) output
+
+run :: String -> [[Int]] -> IO (Environment, TypeEnvironment, Output)
+run fileName input = do sourceCode <- readFile fileName
+                        let ast = parse $ alexScanTokens $ sourceCode
+                        let (imports, ast') = getImports ast
+                        envsOuts <- mapM (\(Import x) -> run ("lib/" ++ x ++ ".spl") []) imports
+                        let importedEnv = foldr1 mergeEnvironments (map fst envsOuts)
+                        
+                        let output = seq (typeOfExps [] ast') (load ast' (streamsConvert input) importedEnv)
+                        return output
+
+getImports :: [Exp] -> ([Exp], [Exp])
+getImports [] = ([], [])
+getImports (e@(Import _) : es) = (e : imports, es')
+      where (imports, es') = getImports es
+getImports es = ([], es)
 
 noParse :: ErrorCall -> IO ()
 noParse e = do let err = show e
@@ -37,7 +52,12 @@ checkInput' (x : xs) | [x] `elem` acceptableChars = checkInput' xs
 streamsSplit :: String -> [[Int]] -- List of streams
 streamsSplit s = map (\i -> map (read . (!! i)) horizontal) [0..(streamLen-1)]
               where horizontal = filter (not . null) $ map words (lines s)
-                    streamLen = (length $ head $ horizontal) --checkStreamSize (length $ head $ horizontal) (tail horizontal)
+                    streamLen = checkStreamSize (length $ head $ horizontal) (tail horizontal)
+
+-- Convert a list of list of ints to a list of streams (the input).
+streamsConvert :: [[Int]] -> [Exp]
+streamsConvert = map (\xs -> Stream (map Int' xs))
+
 
 checkStreamSize :: Int -> [[String]] -> Int
 checkStreamSize n [] = n

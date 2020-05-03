@@ -1,3 +1,5 @@
+import std
+
 fn<(int) -> int> alsoalsoAdd = fn (int x) -> int {
     return 5 + x
 }
@@ -6,10 +8,6 @@ fn hey(fn<(int) -> int> f, int x) -> int {
     fn<(int) -> int> h = fn (int z) -> int {return z}
 
     return h(f(x))
-}
-
-fn add(int x) -> int {
-    return 4 + x
 }
 
 fn<(int) -> int> alsoAdd = add

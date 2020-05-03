@@ -19,6 +19,7 @@ $white+                         ;
 int                             { \p s -> TokenIntType p }
 stream                          { \p s -> TokenStreamType p }
 boolean                         { \p s -> TokenBooleanType p }
+import                          { \p s -> TokenImport p }
 input                           { \p s -> TokenInput p }
 print                           { \p s -> TokenPrint p }
 fn                              { \p s -> TokenFunction p }
@@ -80,6 +81,7 @@ data Token =
     TokenIntType AlexPosn        |
     TokenStreamType AlexPosn     |
     TokenBooleanType AlexPosn    |
+    TokenImport AlexPosn         |
     TokenInput AlexPosn          |
     TokenPrint AlexPosn          |
     TokenFunction AlexPosn       |
@@ -140,6 +142,7 @@ tokenPosn (TokenSemicolon (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenIntType (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenStreamType (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenBooleanType (AlexPn _ x y)) = (x, y)
+tokenPosn (TokenImport (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenInput (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenPrint (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenFunction (AlexPn _ x y)) = (x, y)
