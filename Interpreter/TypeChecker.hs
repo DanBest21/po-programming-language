@@ -74,14 +74,14 @@ typeOf tenv (Print e) | tWellTyped = (TypeNone, tenv')
             tWellTyped = t == TypeInt
 
 -- Function declaration type checker
-typeOf tenv (FnDec x params t es) = (t', (x, (TypeFunction t' (map (fst) params))) : tenv)
+typeOf tenv (FnDec x params t es) = (t', (x, TypeFunction (getReturnType tenv' es t x) (map (fst) params)) : tenv)
       where tenv' = getFunctionEnvironment x t params tenv
-            t'    = typeOfFuncs tenv' es t x
+            t'    = TypeNone
 
 -- Anonymous function declaration type checker
 typeOf tenv (FnAnonDec params t es) = (t', tenv)
       where tenv' = getFunctionEnvironment "_anon" t params tenv
-            t'    = typeOfFuncs tenv es t "_anon"
+            t'    = TypeFunction (getReturnType tenv' es t "_anon") (map (fst) params)
 
 -- Function call type checker
 typeOf tenv (FnCall f@(VarRef x) args) | tWellTyped = (t, tenv)
@@ -290,24 +290,25 @@ typeOf tenv (VarAssign x e) | tWellTyped = (t1, updateBindingType x t1 tenv')
 -- Variable reference type checker
 typeOf tenv (VarRef x) = (getBindingType x tenv, tenv)
 
-typeOfFuncs :: TypeEnvironment -> [Exp] -> Type -> String -> Type
-typeOfFuncs tenv [] rtype fname = rtype
-typeOfFuncs tenv ((FnReturn e) : es) rtype fname | rtype == TypeNone = error $ "Function '" ++ fname ++ "' should not include a return statement as it has no return type." 
-                                                 | tWellTyped        = typeOfFuncs tenv' es rtype fname
+getReturnType :: TypeEnvironment -> [Exp] -> Type -> String -> Type
+getReturnType tenv [] rtype fname = rtype
+getReturnType tenv ((FnReturn e) : es) rtype fname | rtype == TypeNone = error $ "Function '" ++ fname ++ "' should not include a return statement as it has no return type." 
+                                                 | tWellTyped        = getReturnType tenv' es rtype fname
+                                                 | fname == "_anon"  = throwTypeError ("return statement of anonymous function") rtype t
                                                  | otherwise         = throwTypeError ("return statement of function '" ++ fname ++ "'") rtype t
       where (t, tenv') = typeOf tenv e
             tWellTyped = rtype == t
-typeOfFuncs tenv ((While e es) : es') rtype fname | tWellTyped = typeOfFuncs tenv' es' rtype fname
+getReturnType tenv ((While e es) : es') rtype fname | tWellTyped = getReturnType tenv' es' rtype fname
                                                   | otherwise  = throwTypeError "while statement" TypeBoolean t
       where (t, tenv') = typeOf tenv e
             tWellTyped = t == TypeBoolean
-typeOfFuncs tenv ((If []) : es) rtype fname = typeOfFuncs tenv es rtype fname
-typeOfFuncs tenv ((If ((e, es) : elifs)) : es') rtype fname | tWellTyped = typeOfFuncs tenv' ((If elifs) : es') rtype fname
+getReturnType tenv ((If []) : es) rtype fname = getReturnType tenv es rtype fname
+getReturnType tenv ((If ((e, es) : elifs)) : es') rtype fname | tWellTyped = getReturnType tenv' ((If elifs) : es') rtype fname
                                                             | otherwise  = throwTypeError "if statement" TypeBoolean t1
       where (t1, tenv') = typeOf tenv e
-            t2          = typeOfFuncs tenv' es rtype fname
+            t2          = getReturnType tenv' es rtype fname
             tWellTyped  = (t1 == TypeBoolean) && (t2 == rtype) 
-typeOfFuncs tenv (e : es) rtype fname = seq t (typeOfFuncs tenv' es rtype fname)    
+getReturnType tenv (e : es) rtype fname = seq t (getReturnType tenv' es rtype fname)    
       where (t, tenv') = typeOf tenv e
 
 -- Iterates through each expression to check it is the valid type
