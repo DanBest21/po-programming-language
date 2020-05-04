@@ -44,7 +44,7 @@ $alpha [$alpha $digit \_]*      { \p s -> TokenVar p s }
 \>\=                            { \p s -> TokenGE p }
 \=\=                            { \p s -> TokenEQ p }
 \!\=                            { \p s -> TokenNE p }
-\:                              { \p s -> TokenCons p }
+\:                              { \p s -> TokenColon p }
 \+\+                            { \p s -> TokenPlusPlus p }
 \-\-                            { \p s -> TokenMinusMinus p }
 \<\-                            { \p s -> TokenTake p }
@@ -106,7 +106,7 @@ data Token =
     TokenGE AlexPosn             |
     TokenEQ AlexPosn             |
     TokenNE AlexPosn             |
-    TokenCons AlexPosn           |
+    TokenColon AlexPosn          |
     TokenPlusPlus AlexPosn       |
     TokenMinusMinus AlexPosn     |
     TokenTake AlexPosn           |
@@ -167,7 +167,7 @@ tokenPosn (TokenLE (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenGE (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenEQ (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenNE (AlexPn _ x y)) = (x, y)
-tokenPosn (TokenCons (AlexPn _ x y)) = (x, y)
+tokenPosn (TokenColon (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenPlusPlus (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenMinusMinus (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenTake (AlexPn _ x y)) = (x, y)

@@ -43,7 +43,7 @@ import Lexer
     '>='         { TokenGE _ }
     '=='         { TokenEQ _ }
     '!='         { TokenNE _ }
-    ':'          { TokenCons _ }
+    ':'          { TokenColon _ }
     '++'         { TokenPlusPlus _ }
     '--'         { TokenMinusMinus _ }
     '<-'         { TokenTake _ }
@@ -87,8 +87,8 @@ import Lexer
 %right NEG '!' '++' '--'
 %right '<-' ':'
 %right '^'
-%left has_next next size SINGLE_LITERAL SINGLE_ARG
-%left input '[' ']' '(' ')'
+%left has_next next size SINGLE_LITERAL 
+%left input '[' ']' SINGLE_ARG '(' ')'
 %%
 Expr : {- empty -}                       { [] }
      | Exps                              { $1 }
@@ -225,7 +225,7 @@ data Exp = Import String
          | FnAnonDec [(Type, String)] Type [Exp]
          | FnCall Exp [Exp]
          | FnReturn Exp
-         | Closure [(Type, String)] Type [Exp] Environment Environment
+         | Closure [(Type, String)] Type [Exp] Environment [String]
          | HasNext Exp
          | Next Exp
          | NextBreak Exp
@@ -268,6 +268,6 @@ checkIfReference _ = False
 convertProcessToWhile :: [(Exp, [String])] -> [Exp] -> Exp
 convertProcessToWhile plist es = Block (streamDecs ++ [While (Boolean' True) (varDecs ++ es)]) 
      where ((s, size) : plistsize) = [ (if (not $ checkIfReference e) then (VarRef ("_processStream" ++ (show i))) else e, length vars) | ((e, vars), i) <- zip plist [1..] ]
-           streamDecs              = [ VarDecBreak TypeStream ("_processStream" ++ show(i)) s | ((s, _), i) <- zip plist [1..], not (checkIfReference s) ]
+           streamDecs              = [ VarDec TypeStream ("_processStream" ++ show(i)) s | ((s, _), i) <- zip plist [1..], not (checkIfReference s) ]
            varDecs                 = [ VarDecBreak TypeInt x (NextBreak (if (not $ checkIfReference s) then (VarRef ("_processStream" ++ (show i))) else s)) | ((s, xs), i) <- zip plist [1..], x <- xs ]
 }

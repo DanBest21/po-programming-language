@@ -96,7 +96,7 @@ typeOf tenv (FnCall f@(VarRef x) args) | tWellTyped = (t, tenv)
 
 -- Anonymous function call type checker
 typeOf tenv (FnCall f@(FnCall _ _) args) | tWellTyped = (t, tenv)
-                                              | otherwise  = error $ "Expected " ++ (show paramsCount) ++ " arguments for anonymous function, but found " ++ (show argsCount) ++ "." 
+                                         | otherwise  = error $ "Expected " ++ (show paramsCount) ++ " arguments for anonymous function, but found " ++ (show argsCount) ++ "." 
       where (t', tenv') = typeOf tenv f
             (TypeFunction t params) = t'
             paramsCount = length params
@@ -293,21 +293,23 @@ typeOf tenv (VarAssign x e) | tWellTyped = (t1, updateBindingType x t1 tenv')
 -- Variable reference type checker
 typeOf tenv (VarRef x) = (getBindingType x tenv, tenv)
 
+typeOf tenv e = error $ "This is e: " ++ (show e) ++ "\nThis is tenv: " ++ (show tenv)
+
 getReturnType :: TypeEnvironment -> [Exp] -> Type -> String -> Type
 getReturnType tenv [] rtype fname = rtype
 getReturnType tenv ((FnReturn e) : es) rtype fname | rtype == TypeNone = error $ "Function '" ++ fname ++ "' should not include a return statement as it has no return type." 
-                                                 | tWellTyped        = getReturnType tenv' es rtype fname
-                                                 | fname == "_anon"  = throwTypeError ("return statement of anonymous function") rtype t
-                                                 | otherwise         = throwTypeError ("return statement of function '" ++ fname ++ "'") rtype t
+                                                   | tWellTyped        = getReturnType tenv' es rtype fname
+                                                   | fname == "_anon"  = throwTypeError ("return statement of anonymous function") rtype t
+                                                   | otherwise         = throwTypeError ("return statement of function '" ++ fname ++ "'") rtype t
       where (t, tenv') = typeOf tenv e
             tWellTyped = rtype == t
-getReturnType tenv ((While e es) : es') rtype fname | tWellTyped = getReturnType tenv' es' rtype fname
-                                                  | otherwise  = throwTypeError "while statement" TypeBoolean t
+getReturnType tenv ((While e es) : es') rtype fname | tWellTyped = getReturnType tenv' (es ++ es') rtype fname
+                                                    | otherwise  = throwTypeError "while statement" TypeBoolean t
       where (t, tenv') = typeOf tenv e
             tWellTyped = t == TypeBoolean
 getReturnType tenv ((If []) : es) rtype fname = getReturnType tenv es rtype fname
 getReturnType tenv ((If ((e, es) : elifs)) : es') rtype fname | tWellTyped = getReturnType tenv' ((If elifs) : es') rtype fname
-                                                            | otherwise  = throwTypeError "if statement" TypeBoolean t1
+                                                              | otherwise  = throwTypeError "if statement" TypeBoolean t1
       where (t1, tenv') = typeOf tenv e
             t2          = getReturnType tenv' es rtype fname
             tWellTyped  = (t1 == TypeBoolean) && (t2 == rtype) 

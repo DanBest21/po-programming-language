@@ -1,15 +1,103 @@
-fn add(int x) -> int {
-    return 4 + x
+fn append(stream s, int x) -> stream
+{
+    return s ++ [x]
 }
 
-fn<(int) -> int> alsoalsoAdd = fn (int x) -> int {
-    return 5 + x
+fn print_stream(stream s) 
+{
+    print next s
+    
+    process s as [x]
+    {
+        print x
+    }
 }
 
-fn hey(fn<(int) -> int> f, int x) -> int {
-    fn<(int) -> int> h = fn (int z) -> int {return z}
+fn range(int start, int end) -> stream
+{
+    stream s = []
+    
+    while start <= end
+    {
+        s = s ++ [start];
+        ++start
+    }
 
-    return h(f(x))
+    return s
 }
 
-fn<(int) -> int> alsoAdd = add
+fn head(stream s) -> int
+{
+    return next s
+}
+
+fn tail(stream s) -> stream
+{
+    next s
+    return s
+}
+
+fn init(stream s) -> stream
+{
+    return (size s-1) <- s
+}
+
+fn last(stream s) -> int
+{
+    return s[size s]
+}
+
+fn null(stream s) -> boolean
+{
+    return !(has_next s)
+}
+
+fn map(fn<(int) -> int> f, stream s) -> stream
+{
+    stream t = []
+
+    process s as [x]
+    {
+        t = append(t, f(x))
+    }
+
+    return t
+}
+
+fn filter(fn<(int) -> boolean> f, stream s) -> stream
+{
+    stream t = []
+
+    process s as [x]
+    {
+        if f(x)
+        {
+            t = append(t, x)
+        }
+    }
+
+    return t
+}
+
+fn foldl(fn<(int, int) -> int> f, int z, stream s) -> int
+{
+    if null(s)
+    {
+        return z
+    }
+    
+    z = f(z, (next s))
+    return foldl(f, z, s)
+}
+
+fn foldr(fn<(int, int) -> int> f, int z, stream s) -> int
+{
+    if null(s)
+    {
+        return z
+    }
+
+    int x = next s
+    
+    return f(x, foldr(f, z, s))
+}

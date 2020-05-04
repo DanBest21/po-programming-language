@@ -4,7 +4,9 @@ import Data.List (nub)
 
 type Kontinuation = [Frame]
 
-data Frame = HWhile Exp [Exp] | WhileH Exp [Exp]
+data Frame = StreamH [Exp] [Exp] [Exp]
+           | HWhile Exp [Exp] | WhileH Exp [Exp] 
+           | BreakH Environment
            | HIf [Exp] [(Exp, [Exp])]
            | PrintH
            | HFnCall [Exp] | FnCallH Exp [Exp] [Exp]
@@ -45,22 +47,27 @@ type Output = [Int]
 
 type State = ([Exp], Environment, Kontinuation, Output)
 
+getBinding' :: String -> Environment -> Environment -> Exp
+getBinding' x [] env = error $ "Unrecognised variable '" ++ x ++ "'.\n" ++ (show env)
+getBinding' x ((y, exp) : env) env' | x == y    = exp
+                                    | otherwise = getBinding' x env env'
+
 -- Retrieve the value that is bound to the given variable identifier.
 getBinding :: String -> Environment -> Exp
 getBinding x [] = error $ "Unrecognised variable '" ++ x ++ "'."
 getBinding x ((y, exp) : env) | x == y    = exp
-                              | otherwise = getBinding x env
+                              | otherwise = getBinding' x env env
 
 setBinding :: Environment -> String -> Exp -> Environment
 setBinding env x exp | availableBinding = env ++ [(x, exp)]
                      | otherwise        = updateBinding env x exp
-                where availableBinding  = not $ x `elem` (map fst env)
+      where availableBinding  = not $ x `elem` (map fst env)
 
 -- Updates an existing environment in the passed environment
 updateBinding :: Environment -> String -> Exp -> Environment
 updateBinding env x exp | existingBinding = filter ((/= x) . fst) env ++ [(x, exp)] 
                         | otherwise       = error $ "Unrecognised variable '" ++ x ++ "'."
-            where existingBinding  = x `elem` (map fst env)
+      where existingBinding  = x `elem` (map fst env)
 
 -- Checks for terminated expressions.
 isValue :: Exp -> Bool
@@ -69,7 +76,7 @@ isValue (Boolean' _) = True
 isValue (Stream []) = True
 isValue (Stream (e : es)) = (isValue e) && (isValue (Stream es))
 isValue (Closure _ _ _ _ _) = True
---isValue (Break) = True
+isValue (Break) = True
 isValue _ = False
 
 mergeEnvironments :: Environment -> Environment -> Environment
@@ -79,7 +86,7 @@ getFunctionEnvironment :: [Exp] -> Environment -> Exp -> (Environment, [Exp])
 getFunctionEnvironment args genv closure = (foldr1 mergeEnvironments [argsEnv, capturedEnv, updatedGenv], es)
       where (Closure params _ es capturedEnv oldGenv) = closure
             argsEnv = zip (map snd params) (args)
-            updatedGenv = map (\(x', e) -> (x', getBinding x' genv)) oldGenv
+            updatedGenv = map (\x' -> (x', getBinding x' genv)) oldGenv
 
 getFunctionFrame :: Kontinuation -> Maybe (Frame, Kontinuation)
 getFunctionFrame [] = Nothing
@@ -97,11 +104,11 @@ getGlobalEnvironment env k = case getFunctionFrame k of
                                 Nothing      -> env
                                 Just (FnEnd _ env', k') -> getGlobalEnvironment env' k'
 
-getContainingEnvironment :: Environment -> Kontinuation -> Environment
-getContainingEnvironment env [] = env
-getContainingEnvironment env k = case getFunctionFrame k of
-                                Nothing      -> env
-                                Just (FnEnd _ env', _) -> env'
+getContainingVars :: Environment -> Kontinuation -> [String]
+getContainingVars env [] = map fst env
+getContainingVars env k = case getFunctionFrame k of
+                                Nothing      -> map fst env
+                                Just (FnEnd _ env', _) -> map fst env'
 
 getNonGlobalEnvironment :: Environment -> Kontinuation -> Environment
 getNonGlobalEnvironment env [] = []
@@ -113,12 +120,17 @@ getExpFromEnvironment :: Exp -> Environment -> Exp
 getExpFromEnvironment (VarRef x) env = getBinding x env
 getExpFromEnvironment e env = e
 
-getClosure :: Exp -> Environment -> Environment -> Exp
+getClosure :: Exp -> Environment -> [String] -> Exp
 getClosure (FnDec _ params t es) env genv = (Closure params t es env genv)
 getClosure (FnAnonDec params t es) env genv = (Closure params t es env genv)
 
 -- Small step evaluation function.
 evalStep :: State -> State
+
+-- Stream statement
+evalStep ((Stream (e : es)) : es', env, k, out) | not (isValue e) = ([e], env, (StreamH es es' []) : k, out)
+evalStep (e : [], env, (StreamH (e' : es) es' exps) : k, out) | isValue e = ([e'], env, (StreamH es es' (exps ++ [e])) : k, out)
+evalStep (e : [], env, (StreamH [] es exps) : k, out) | isValue e = (Stream (exps ++ [e]) : es, env, k, out)
 
 -- While statement
 evalStep ((While e es) : es', env, k, out) = (e : es', env, (HWhile e es) : k, out)
@@ -154,12 +166,13 @@ evalStep ((FnReturn e) : es, env, k, out) = case getFunctionFrame k of
 evalStep (e : es, env, (FnReturnH es' env' k') : k, out) | isValue e = (e : es', env', k', out)
 
 -- Function declaration statement
-evalStep (e@(FnDec x params t es) : es', env, k, out) = (closure : es', setBinding env x closure, k, out)
-      where closure = getClosure e (getNonGlobalEnvironment env k) (getContainingEnvironment env k)
+evalStep (e@(FnDec x _ _ _) : es', env, k, out) = (recursiveClosure : es', setBinding env x recursiveClosure, k, out)
+      where closure@(Closure params t es env' genv') = getClosure e (getNonGlobalEnvironment env k) (getContainingVars env k)
+            recursiveClosure = (Closure params t es env' (x : genv'))
 
 -- Anonymous function declaration statement
 evalStep (e@(FnAnonDec params t es) : es', env, k, out) = (closure : es', env, k, out)
-      where closure = getClosure e (getNonGlobalEnvironment env k) (getContainingEnvironment env k)
+      where closure = getClosure e (getNonGlobalEnvironment env k) (getContainingVars env k)
       
 -- Function end statement if the function does not return a value.
 evalStep ([], env, (FnEnd es' env') : k, out) = (es', env', k, out)
@@ -176,7 +189,7 @@ evalStep ((VarRef x) : es, env, (NextH) : k, out) | null es'  = error "Cannot ca
       where (Stream es') = getBinding x env
 
 -- Process statement
-evalStep ((VarDecBreak t x e@(NextBreak _)) : es, env, k, out) = (e : es, env, (VarDecBreakH x) : k, out)
+evalStep ((VarDecBreak t x e) : es, env, k, out) = (e : es, env, (VarDecBreakH x) : k, out)
 evalStep (e : es, env, (VarDecBreakH x) : k, out) | isValue e = (es, setBinding env x e, k, out)
 
 evalStep ((NextBreak e) : es, env, k, out) = (e : es, env, (NextBreakH) : k, out)
@@ -304,18 +317,21 @@ evalStep ((VarAssign x e) : es, env, k, out) = (e : es, env, (VarAssignH x) : k,
 evalStep (e : es, env, (VarAssignH x) : k, out) | isValue e = (e : es, updateBinding env x e, k, out)
 
 -- Variable reference statement
+evalStep ((VarRef (x)) : es, env, k, out) | getBinding x env == Break = ([], env, (BreakH env) : k, out)
 evalStep ((VarRef x) : es, env, k, out) = ((getBinding x env) : es, env, k, out)
 
 -- Break statement
-evalStep ((Break) : es, env, k, out) = case getBlockFrame k of
-                                          Nothing -> error "Can only break inside a while loop."
-                                          Just (WhileH _ es', k') -> (es', env, k', out)
+evalStep ((Break) : es, env, k, out) = ([], env, (BreakH env) : k, out)
+evalStep ([], env, (BreakH env') : k, out) = case getBlockFrame k of
+                                                Nothing -> error "Can only break inside a while loop."
+                                                Just (WhileH _ es', k') -> (es', env', k', out)
 
 -- Catch idempotent statements.
 evalStep (e : es, env, (FnEnd es' env') : k, out) | isValue e = (es, env, (FnEnd es' env') : k, out)
 evalStep (e : es, env, (WhileH e' es') : k, out) | isValue e = (es, env, (WhileH e' es') : k, out)
 evalStep (e : es, env, [], out) | isValue e = (es, env, [], out)
 
+-- Import statements
 evalStep ((Import _) : es, env, k, out) = error "Import statements can only exist at the beginning of a file."
 
 evalStep (es, env, k, out) = error $ "es: " ++ (show es) ++ "\nenv: " ++ (show env) ++ "\nk: " ++ (show k) ++ "\nout: " ++ (show out)
@@ -327,7 +343,7 @@ setupEnvironment (e : es) i = ("input{" ++ (show i) ++ "}", e) : setupEnvironmen
 -- Function to iterate the small step reduction to termination, returning the final environment
 load :: [Exp] -> [Exp] -> Environment -> (Environment, Output)
 load [] _ _ = ([], [])
-load es input startingEnv = evalLoop (es, env, [], [])
+load es input startingEnv = evalLoop (es, beginEnv, [], [])
   where evalLoop (es, env, k, out) = if (null es') && (null k') then (env', out') else evalLoop (es', env', k', out')
                        where (es', env', k', out') = evalStep (es, env, k, out)
-        env = mergeEnvironments startingEnv (setupEnvironment input 1) 
+        beginEnv = mergeEnvironments (setupEnvironment input 1) startingEnv

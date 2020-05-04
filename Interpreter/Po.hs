@@ -12,16 +12,16 @@ main = catch main' noParse
 
 main' :: IO ()
 main' = do -- (fileName : _ ) <- getArgs 
-           contents <- readFile "../Tests/p2_input.txt" -- getContents
+           contents <- readFile "../Tests/p5_input.txt" -- getContents
            let input = seq (checkInput $ words contents) (streamsSplit contents)
-           (_, _, output) <- run "../Source Code/pr0.spl" input
-           mapM_ (putStrLn . show) output
+           (_, tenv, output) <- run "../Source Code/pr5.spl" input
+           seq tenv (mapM_ (putStrLn . show) output)
 
 run :: String -> [[Int]] -> IO (Environment, TypeEnvironment, Output)
 run fileName input = do sourceCode <- readFile fileName
                         let ast = parse $ alexScanTokens $ sourceCode
                         let (imports, ast') = getImports ast
-                        envsTenvsOuts <- mapM (\(Import x) -> run ("lib/" ++ x ++ ".spl") []) imports
+                        envsTenvsOuts <- mapM (\(Import x) -> run ("lib/" ++ x ++ ".spl") []) ((Import "std") : imports)
                         let envs = map (\(env', _, _) -> env') envsTenvsOuts
                         let importedEnv = foldr mergeEnvironments [] envs
                         let tenvs = map (\(_, tenv', _) -> tenv') envsTenvsOuts

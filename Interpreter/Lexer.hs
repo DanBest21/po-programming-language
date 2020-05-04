@@ -16294,7 +16294,7 @@ data Token =
     TokenGE AlexPosn             |
     TokenEQ AlexPosn             |
     TokenNE AlexPosn             |
-    TokenCons AlexPosn           |
+    TokenColon AlexPosn          |
     TokenPlusPlus AlexPosn       |
     TokenMinusMinus AlexPosn     |
     TokenTake AlexPosn           |
@@ -16355,7 +16355,7 @@ tokenPosn (TokenLE (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenGE (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenEQ (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenNE (AlexPn _ x y)) = (x, y)
-tokenPosn (TokenCons (AlexPn _ x y)) = (x, y)
+tokenPosn (TokenColon (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenPlusPlus (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenMinusMinus (AlexPn _ x y)) = (x, y)
 tokenPosn (TokenTake (AlexPn _ x y)) = (x, y)
@@ -16414,7 +16414,7 @@ alex_action_27 =  \p s -> TokenLE p
 alex_action_28 =  \p s -> TokenGE p 
 alex_action_29 =  \p s -> TokenEQ p 
 alex_action_30 =  \p s -> TokenNE p 
-alex_action_31 =  \p s -> TokenCons p 
+alex_action_31 =  \p s -> TokenColon p 
 alex_action_32 =  \p s -> TokenPlusPlus p 
 alex_action_33 =  \p s -> TokenMinusMinus p 
 alex_action_34 =  \p s -> TokenTake p 

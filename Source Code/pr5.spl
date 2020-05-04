@@ -1,7 +1,1 @@
-int acc = 0
-
-process input{1} as [a1]
-{
-    acc += a1
-    print acc
-}
+foldl(fn(int x, int y) -> int { print x + y; return x + y }, 0, input{1})

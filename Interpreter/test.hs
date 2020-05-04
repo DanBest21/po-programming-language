@@ -1,5 +1,6 @@
 import Lexer
 import Parser
+import TypeChecker
 
 main :: IO ()
 main = do
