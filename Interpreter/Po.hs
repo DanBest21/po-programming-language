@@ -21,7 +21,7 @@ run :: String -> [[Int]] -> IO (Environment, TypeEnvironment, Output)
 run fileName input = do sourceCode <- readFile fileName
                         let ast = parse $ alexScanTokens $ sourceCode
                         let (imports, ast') = getImports ast
-                        envsTenvsOuts <- mapM (\(Import x) -> run ("lib/" ++ x ++ ".spl") []) ((Import "std") : imports)
+                        envsTenvsOuts <- mapM (\(Import x) -> run ("lib/" ++ x ++ ".spl") []) (if fileName /= "lib/std.spl" then (Import "std") : imports else imports)
                         let envs = map (\(env', _, _) -> env') envsTenvsOuts
                         let importedEnv = foldr mergeEnvironments [] envs
                         let tenvs = map (\(_, tenv', _) -> tenv') envsTenvsOuts
@@ -29,7 +29,6 @@ run fileName input = do sourceCode <- readFile fileName
                         let (env, out) = load ast' (streamsConvert input) importedEnv
                         return (env, tenv, out)
                         
-
 getImports :: [Exp] -> ([Exp], [Exp])
 getImports [] = ([], [])
 getImports (e@(Import _) : es) = (e : imports, es')
