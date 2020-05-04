@@ -266,8 +266,9 @@ checkIfReference (InputGet e) = True
 checkIfReference _ = False
 
 convertProcessToWhile :: [(Exp, [String])] -> [Exp] -> Exp
-convertProcessToWhile plist es = Block (streamDecs ++ [While (Boolean' True) (varDecs ++ es)]) 
+convertProcessToWhile plist es = Block (streamDecs ++ [While (Boolean' True) (varDecs ++ es ++ varRefs)]) 
      where ((s, size) : plistsize) = [ (if (not $ checkIfReference e) then (VarRef ("_processStream" ++ (show i))) else e, length vars) | ((e, vars), i) <- zip plist [1..] ]
            streamDecs              = [ VarDec TypeStream ("_processStream" ++ show(i)) s | ((s, _), i) <- zip plist [1..], not (checkIfReference s) ]
            varDecs                 = [ VarDecBreak TypeInt x (NextBreak (if (not $ checkIfReference s) then (VarRef ("_processStream" ++ (show i))) else s)) | ((s, xs), i) <- zip plist [1..], x <- xs ]
+           varRefs                 = map VarRef (map (\(VarDecBreak _ name _) -> name) varDecs)
 }

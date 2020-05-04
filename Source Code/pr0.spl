@@ -1,3 +1,4 @@
-import std
+process input{1} as [a1], input{2} as [_, b2]
+{
 
-process 
+}
