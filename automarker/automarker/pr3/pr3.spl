@@ -1,0 +1,7 @@
+print 0
+
+process input{1} as [a1], input{2} as [_, b2]
+{
+    print b2
+    print a1
+}

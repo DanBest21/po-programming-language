@@ -1,0 +1,8 @@
+process input{1} as [a1], input{2} as [b1], input{3} as [c1]
+{
+    print c1
+    print b1
+    print a1
+    print a1 + b1
+    print b1 + c1
+}

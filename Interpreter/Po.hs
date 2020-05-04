@@ -11,23 +11,24 @@ main :: IO ()
 main = catch main' noParse
 
 main' :: IO ()
-main' = do -- (fileName : _ ) <- getArgs 
-           contents <- readFile "../Tests/p5_input.txt" -- getContents
+main' = do (fileName : _ ) <- getArgs 
+           let sourceDir = reverse $ dropWhile (/= '/') (reverse fileName)
+           contents <- getContents
            let input = seq (checkInput $ words contents) (streamsSplit contents)
-           (_, tenv, output) <- run "../Source Code/pr5.spl" input
+           (_, tenv, output) <- run fileName sourceDir input
            seq tenv (mapM_ (putStrLn . show) output)
 
-run :: String -> [[Int]] -> IO (Environment, TypeEnvironment, Output)
-run fileName input = do sourceCode <- readFile fileName
-                        let ast = parse $ alexScanTokens $ sourceCode
-                        let (imports, ast') = getImports ast
-                        envsTenvsOuts <- mapM (\(Import x) -> run ("lib/" ++ x ++ ".spl") []) (if fileName /= "lib/std.spl" then (Import "std") : imports else imports)
-                        let envs = map (\(env', _, _) -> env') envsTenvsOuts
-                        let importedEnv = foldr mergeEnvironments [] envs
-                        let tenvs = map (\(_, tenv', _) -> tenv') envsTenvsOuts
-                        let (_, tenv) = typeOfExps (foldr mergeTypeEnvironments [] tenvs) ast'
-                        let (env, out) = load ast' (streamsConvert input) importedEnv
-                        return (env, tenv, out)
+run :: String -> String -> [[Int]] -> IO (Environment, TypeEnvironment, Output)
+run fileName sourceDir input = do sourceCode <- readFile fileName
+                                  let ast = parse $ alexScanTokens $ sourceCode
+                                  let (imports, ast') = getImports ast
+                                  envsTenvsOuts <- mapM (\(Import x) -> run (sourceDir ++ "lib/" ++ x ++ ".spl") sourceDir []) (if fileName /= (sourceDir ++ "lib/std.spl") then (Import "std") : imports else imports)
+                                  let envs = map (\(env', _, _) -> env') envsTenvsOuts
+                                  let importedEnv = foldr mergeEnvironments [] envs
+                                  let tenvs = map (\(_, tenv', _) -> tenv') envsTenvsOuts
+                                  let (_, tenv) = typeOfExps (foldr mergeTypeEnvironments [] tenvs) ast'
+                                  let (env, out) = load ast' (streamsConvert input) importedEnv
+                                  return (env, tenv, out)
                         
 getImports :: [Exp] -> ([Exp], [Exp])
 getImports [] = ([], [])

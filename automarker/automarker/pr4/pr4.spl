@@ -1,0 +1,6 @@
+process input{1} as [a1, a2, a3]
+{
+    print a3
+    print 2 * a2
+    print 3 * a1 - 1
+}

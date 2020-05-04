@@ -1,0 +1,1 @@
+foldl(fn(int x, int y) -> int { print x + y; return x + y }, 0, input{1})
