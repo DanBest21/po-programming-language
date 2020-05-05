@@ -1,0 +1,22 @@
+fn fib(int n) -> int
+{
+    if n == 1 or n == 2
+    {
+        return 1
+    }
+
+    return fib(n-1) + fib(n-2)
+}
+
+process range(1, size input{1}) as [n]
+{
+    int sum = 0
+    int i = 0
+    
+    while i < n
+    {
+        sum += fib(n-i) * input{1}[++i]
+    }
+    
+    print sum
+}

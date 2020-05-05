@@ -1,4 +1,5 @@
-process input{1} as [a1], input{2} as [_, b2]
-{
+import math
 
-}
+stream s = [1,2,3,4,5]
+
+print foldl(multiply, 1, s)

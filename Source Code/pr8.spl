@@ -1,0 +1,14 @@
+import math
+
+while has_next input{1} or has_next input{2}
+{
+    stream s1 = 5 <- input{1}
+    stream s2 = 5 <- input{2}
+
+    print_stream(intersperse(s1, s2))
+
+    if size s1 == 5 and size s2 == 5
+    {
+        print sum(s1) - sum(s2)
+    } 
+}

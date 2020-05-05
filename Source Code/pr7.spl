@@ -1,0 +1,5 @@
+process input{1} as [_, _, a3, _, _, _, a7]
+{
+    print a3
+    print a7
+}

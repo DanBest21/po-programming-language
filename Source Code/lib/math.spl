@@ -51,3 +51,8 @@ fn modulo(int x, int y) -> int
 {
     return x % y
 }
+
+fn sum(stream s) -> int
+{
+    return foldl(add, 0, s)
+}
