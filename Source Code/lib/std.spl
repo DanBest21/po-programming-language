@@ -65,6 +65,18 @@ fn intersperse(stream s1, stream s2) -> stream
     return s ++ s1 ++ s2
 }
 
+fn reverse(stream s) -> stream
+{
+    stream t = []
+
+    process s as [x]
+    {
+        t = x : t
+    }
+
+    return t
+}
+
 fn map(fn<(int) -> int> f, stream s) -> stream
 {
     stream t = []
