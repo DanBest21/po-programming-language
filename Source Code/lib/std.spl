@@ -112,6 +112,7 @@ fn foldl(fn<(int, int) -> int> f, int z, stream s) -> int
     }
     
     z = f(z, (next s))
+    
     return foldl(f, z, s)
 }
 
