@@ -1,5 +1,7 @@
 import math
 
 stream s = [1,2,3,4,5]
+stream t = [6,7,8,9,10,11,12]
 
-print foldl(multiply, 1, s)
+print_stream(filter(
+    even, t))

@@ -5,8 +5,6 @@ fn append(stream s, int x) -> stream
 
 fn print_stream(stream s) 
 {
-    print next s
-    
     process s as [x]
     {
         print x
@@ -52,56 +50,72 @@ fn null(stream s) -> boolean
     return !(has_next s)
 }
 
-fn intersperse(stream s1, stream s2) -> stream
+fn intersperse(int n, stream s) -> stream
 {
-    stream s = []
-    
-    process s1 as [x], s2 as [y]
+    if null(s)
     {
-        s = append(s, x)
-        s = append(s, y)
+        return []
     }
+    else
+    {
+        return head(s) : n : intersperse(n, tail(s))
+    }
+}
 
-    return s ++ s1 ++ s2
+fn zip(stream s1, stream s2) -> stream
+{
+    if null(s1)
+    {
+        return s2
+    }
+    elif null(s2)
+    {
+        return s1
+    }
+    else
+    {
+        return head(s1) : head(s2) : zip(tail(s1), tail(s2))
+    }
 }
 
 fn reverse(stream s) -> stream
 {
-    stream t = []
-
-    process s as [x]
+    if null(s)
     {
-        t = x : t
+        return []   
     }
-
-    return t
+    else
+    {
+        return reverse(tail(s)) ++ [head(s)]
+    }
 }
 
 fn map(fn<(int) -> int> f, stream s) -> stream
 {
-    stream t = []
-
-    process s as [x]
+    if null(s)
     {
-        t = append(t, f(x))
+        return []   
     }
-
-    return t
+    else
+    {
+        return f(head(s)) : map(f, tail(s))
+    }
 }
 
 fn filter(fn<(int) -> boolean> f, stream s) -> stream
 {
-    stream t = []
-
-    process s as [x]
+    if null(s)
     {
-        if f(x)
-        {
-            t = append(t, x)
-        }
+        return []
     }
-
-    return t
+    elif f(head(s))
+    {
+        return (head(s)) : filter(f, tail(s))
+    } 
+    else 
+    {
+        return filter(f, tail(s))
+    }
 }
 
 fn foldl(fn<(int, int) -> int> f, int z, stream s) -> int

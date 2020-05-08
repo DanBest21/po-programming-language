@@ -1,0 +1,29 @@
+main features:
+- function-scoped   Lang. Overview
+- imperative    Lang. Overview
+- call-by-value semantics   Variables
+- 4 data types: boolean, int, stream, function  Types (function briefly)
+- stream: dynamically-sized array of integers   Types
+- first-class functions CODE EXAMPLE (map recursive definition, usage with anonymous function, call-by-value, some int operation)   Functions
+- statically, strongly typed    Lang. Overview
+- standard library and modules  Lang. Overview
+- variables     Variables
+
+syntax:
+- integer operations (+, -, *, /, ^, %)     Types
+- boolean operators (and, or, !)    Types
+- if/elif/else conditional statements   Statements
+- while loop (with break)   Statements
+- process loop CODE EXAMPLE (underscore, 2 streams, 1 input{n} 1 literal)   Statements
+- optional line-separator (;)   Statements
+- stream operations (construct (:), concatenation (++), take (<-), next, has_next, direct indexing ([i]))   Types
+- comparison operators (integers: <, <=, >, >=; all: ==, !=)    Types
+- input stream n available as global, pre-defined variable 'input{n}'   IO
+- output by means of 'print' keyword    IO
+- syntactic sugar for integer operations (++n, --n, +=, -=, *=, /=, ^=, %=)     Variables
+- variable names must start with a letter and contain only alphanumeric characters  Variables
+
+evaluation:
+- CEK machine
+- "control" is a list of expressions
+- added output list as something passed around

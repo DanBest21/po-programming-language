@@ -56,3 +56,13 @@ fn sum(stream s) -> int
 {
     return foldl(add, 0, s)
 }
+
+fn even(int n) -> boolean
+{
+    return n % 2 == 0
+}
+
+fn odd(int n) -> boolean
+{
+    return n % 2 != 0
+}
