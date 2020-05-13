@@ -1,0 +1,143 @@
+fn append(stream s, int x) -> stream
+{
+    return s ++ [x]
+}
+
+fn print_stream(stream s) 
+{
+    process s as [x]
+    {
+        print x
+    }
+}
+
+fn range(int start, int end) -> stream
+{
+    stream s = []
+    
+    while start <= end
+    {
+        s = s ++ [start];
+        ++start
+    }
+
+    return s
+}
+
+fn head(stream s) -> int
+{
+    return next s
+}
+
+fn tail(stream s) -> stream
+{
+    next s
+    return s
+}
+
+fn init(stream s) -> stream
+{
+    return (size s-1) <- s
+}
+
+fn last(stream s) -> int
+{
+    return s[size s]
+}
+
+fn null(stream s) -> boolean
+{
+    return !(has_next s)
+}
+
+fn intersperse(int n, stream s) -> stream
+{
+    if null(s)
+    {
+        return []
+    }
+    else
+    {
+        return head(s) : n : intersperse(n, tail(s))
+    }
+}
+
+fn zip(stream s1, stream s2) -> stream
+{
+    if null(s1)
+    {
+        return s2
+    }
+    elif null(s2)
+    {
+        return s1
+    }
+    else
+    {
+        return head(s1) : head(s2) : zip(tail(s1), tail(s2))
+    }
+}
+
+fn reverse(stream s) -> stream
+{
+    if null(s)
+    {
+        return []   
+    }
+    else
+    {
+        return reverse(tail(s)) ++ [head(s)]
+    }
+}
+
+fn map(fn<(int) -> int> f, stream s) -> stream
+{
+    if null(s)
+    {
+        return []   
+    }
+    else
+    {
+        return f(head(s)) : map(f, tail(s))
+    }
+}
+
+fn filter(fn<(int) -> boolean> f, stream s) -> stream
+{
+    if null(s)
+    {
+        return []
+    }
+    elif f(head(s))
+    {
+        return (head(s)) : filter(f, tail(s))
+    } 
+    else 
+    {
+        return filter(f, tail(s))
+    }
+}
+
+fn foldl(fn<(int, int) -> int> f, int z, stream s) -> int
+{
+    if null(s)
+    {
+        return z
+    }
+    
+    z = f(z, (next s))
+    
+    return foldl(f, z, s)
+}
+
+fn foldr(fn<(int, int) -> int> f, int z, stream s) -> int
+{
+    if null(s)
+    {
+        return z
+    }
+
+    int x = next s
+    
+    return f(x, foldr(f, z, s))
+}

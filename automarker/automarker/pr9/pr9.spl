@@ -1,0 +1,6 @@
+print_stream(
+    zip(
+        input{1},
+        range(1, size input{1})
+        )
+    )
